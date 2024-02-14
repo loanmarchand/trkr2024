@@ -1,4 +1,4 @@
-package org.helmo;
+package org.helmo.probe;
 
 public abstract class Probe {
     protected String servicesURL;
