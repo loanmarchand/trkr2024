@@ -9,7 +9,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 public class ProbeHttps extends Probe {
-    private HttpClient client;
+    private final HttpClient client;
     private boolean running;
 
     public ProbeHttps(String servicesURL, int pollingInterval) {
