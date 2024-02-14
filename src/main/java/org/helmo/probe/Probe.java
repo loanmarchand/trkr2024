@@ -1,8 +1,11 @@
 package org.helmo.probe;
 
+import java.util.List;
+
 public abstract class Probe {
     protected String servicesURL;
     protected int pollingInterval;
+    protected List<Aurl> urls;
 
     public Probe(String servicesURL, int pollingInterval) {
         this.servicesURL = servicesURL;
