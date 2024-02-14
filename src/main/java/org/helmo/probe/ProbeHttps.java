@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class ProbeHttps extends Probe {
     private final HttpClient client;
     private boolean running;
-    private ConfigProbes configProbes;
+    private final ConfigProbes configProbes;
     private final ScheduledExecutorService scheduler;
 
     public ProbeHttps(String servicesURL, int pollingInterval, ConfigProbes configProbes) {
@@ -64,9 +65,13 @@ public class ProbeHttps extends Probe {
                     .GET()
                     .build();
 
+            Instant start = Instant.now(); // Marquer le début de la requête
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            Instant finish = Instant.now(); // Marquer la fin de la requête
+
+            long timeElapsed = Duration.between(start, finish).toMillis(); // Calculer le temps écoulé en millisecondes
+            System.out.println("Réponse reçue : " + response.statusCode() + " en " + timeElapsed + " ms");
             // Ici, vous pouvez traiter la réponse, par exemple vérifier le code de statut
-            System.out.println("Réponse reçue : " + response.statusCode());
         } catch (Exception e) {
             System.out.println("Erreur lors de la collecte des données : " + e.getMessage());
         }
@@ -93,5 +98,12 @@ public class ProbeHttps extends Probe {
         String url = "https://www.google.com";
         Probe probe = new ProbeHttps(url, 10, configProbes);
         probe.start();
+
+        try {
+            Thread.sleep(60000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        probe.stop();
     }
 }
