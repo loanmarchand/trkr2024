@@ -1,4 +1,4 @@
-package org.helmo.probe;
+package org.helmo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
