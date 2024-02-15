@@ -1,7 +1,5 @@
 package org.helmo.probe;
 
-import org.helmo.probe.Probe;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,7 +9,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +67,7 @@ public class ProbeHttps extends Probe {
                 configData.append(configLine).append("\n");
                 // Traitez ici la ligne de configuration si nécessaire
             }
-            System.out.println("Configuration reçue: " + configData.toString());
+            System.out.println("Configuration reçue: " + configData);
             // Ici, vous pouvez traiter l'ensemble de la configuration reçue
         } catch (IOException e) {
             System.out.println("Erreur lors de la réception de la configuration: " + e.getMessage());
