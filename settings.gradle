@@ -1,2 +1,6 @@
 rootProject.name = 'trkr2024'
+include 'client'
+include 'monitor_daemon'
+include 'probe'
+include 'json'
 
