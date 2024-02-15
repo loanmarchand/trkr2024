@@ -9,18 +9,27 @@ import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class ProbeSNMP extends Probe {
+    private final int pollingInterval;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+
     public ProbeSNMP(String servicesURL, int pollingInterval) {
         super(servicesURL, pollingInterval);
+        this.pollingInterval = pollingInterval;
     }
 
     /**
-     * Une fois que le probe est démarré, il doit collecter des données à intervalle régulier
+     * Une fois que le probe est démarré, il doit collecter des données à intervalles réguliers
      */
     @Override
     public void start() {
         System.out.println("Start SNMP probe");
-        collectData();
+        scheduler.scheduleAtFixedRate(this::collectData, 0, pollingInterval, TimeUnit.SECONDS);
     }
 
     @Override
@@ -31,23 +40,25 @@ public class ProbeSNMP extends Probe {
     @Override
     protected void collectData() {
         System.out.println("Collect data from SNMP probe");
+
+        // TODO: il faudra récupérer les différentes informations de l'URL via les REGEX
         try {
             // Préparation de l'adresse et du transport
-            Address targetAddress = GenericAddress.parse("udp:trkr.swilabus.com/161"); // Utilisation de l'adresse fournie
+            Address targetAddress = GenericAddress.parse("udp:trkr.swilabus.com/161"); // TODO: ici
             TransportMapping transport = new DefaultUdpTransportMapping();
             transport.listen();
 
             // Création de la cible
             CommunityTarget target = new CommunityTarget();
-            target.setCommunity(new OctetString("1amMemb3r0fTe4mSWILA")); // Utilisation de la communauté fournie
+            target.setCommunity(new OctetString("1amMemb3r0fTe4mSWILA")); // TODO: ici
             target.setAddress(targetAddress);
             target.setRetries(2);
             target.setTimeout(1500);
-            target.setVersion(SnmpConstants.version2c); // Supposition que la version 2c est utilisée
+            target.setVersion(SnmpConstants.version2c); // TODO: ici
 
             // Création du PDU
             PDU pdu = new PDU();
-            pdu.add(new VariableBinding(new OID("1.3.6.1.4.1.2021.11.11.0"))); // OID fourni
+            pdu.add(new VariableBinding(new OID("1.3.6.1.4.1.2021.11.11.0"))); // TODO: ici
             pdu.setType(PDU.GET);
 
             // Envoi de la requête SNMP
