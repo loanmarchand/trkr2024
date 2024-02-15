@@ -1,8 +1,5 @@
-import org.helmo.Aurl;
-import org.helmo.ConfigMonitor;
-import org.helmo.JsonReader;
+import org.helmo.*;
 
-import org.helmo.Url;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,5 +42,21 @@ public class JsonReaderTest {
 
         //"snmp2": "snmp2!snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0!10!99999999"
         assertTrue(configMonitor.probes().contains(new Aurl("snmp2", new Url("snmp", "1amMemb3r0fTe4mSWILA", null, "trkr.swilabus.com", 161, "/1.3.6.1.4.1.2021.11.11.0"), 10, 99999999)));
+    }
+
+    @Test
+    void testReadConfigProbe() {
+        JsonReader jsonReader = new JsonReader();
+        ConfigProbes configProbes = jsonReader.readConfigProbe("/Users/jillianrezette/Library/Mobile Documents/com~apple~CloudDocs/Helmo - Bac 2/Projet/trkr2024/ressources/config-probes.json");
+
+        assertNotNull(configProbes);
+        assertEquals("snmp", configProbes.protocol());
+        assertEquals("224.0.0.254", configProbes.multicastAddress());
+        assertEquals(65001, configProbes.multicastPort());
+        assertEquals("monInterfaceReseau_12345", configProbes.multicastInterface());
+        assertEquals(10, configProbes.multicastDelay());
+        assertEquals(65002, configProbes.unicastPort());
+        assertEquals("MaCleAESGenereeParMesSoins", configProbes.aesKey());
+
     }
 }

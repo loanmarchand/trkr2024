@@ -43,7 +43,6 @@ public class JsonReader {
         // Récupérer les données de la liste "probes" en tant qu'objet JSON
         JSONObject probesJson = (JSONObject) jsonObject.get("probes");
 
-        // Initialiser une liste pour stocker les objets Aurl
         List<Aurl> probes = new ArrayList<>();
 
         // Parcourir les entrées de l'objet JSON des "probes"
@@ -52,7 +51,6 @@ public class JsonReader {
             String probeId = probeEntry.getKey();
             String probeValue = probeEntry.getValue();
 
-            // Utiliser votre méthode pour parser une URL augmentée et l'ajouter à la liste
             Aurl aurl = URLParser.parseAugmentedUrl(probeValue);
             if (aurl != null) {
                 probes.add(aurl);
@@ -72,6 +70,27 @@ public class JsonReader {
             protocolsDelay.put(protocolKey, protocolValue);
         }
         return protocolsDelay;
+    }
+
+    public ConfigProbes readConfigProbe(String fileName) {
+        try {
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(new FileReader(fileName));
+            JSONObject jsonObject = (JSONObject) obj;
+
+            String protocol = (String) jsonObject.get("protocol");
+            String multicastAddress = (String) jsonObject.get("multicastAddress");
+            int multicastPort = ((Long) jsonObject.get("multicastPort")).intValue();
+            String multicastInterface = (String) jsonObject.get("multicastInterface");
+            int multicastDelay = ((Long) jsonObject.get("multicastDelay")).intValue();
+            int unicastPort = ((Long) jsonObject.get("unicastPort")).intValue();
+            String aesKey = (String) jsonObject.get("aesKey");
+
+            return new ConfigProbes(protocol, multicastAddress, multicastPort, multicastInterface, multicastDelay, unicastPort, aesKey);
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
