@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JsonReaderTest {
 
     @Test
-    void testReadConfigMonitor() {
+    void testReadConfigMonitor() { //TODO : changer le path et renommer les tests
         JsonReader jsonReader = new JsonReader();
         ConfigMonitor configMonitor = jsonReader.readConfigMonitor("/Users/jillianrezette/Library/Mobile Documents/com~apple~CloudDocs/Helmo - Bac 2/Projet/trkr2024/ressources/config-monitor.json");
 

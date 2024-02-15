@@ -4,7 +4,7 @@ import org.helmo.Url;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class URLParserTest {
+public class URLParserTest { //TODO : renommer les tests
 
     @Test
     void testHttp1Probe() {

@@ -33,7 +33,7 @@ public class JsonReader {
 
             return new ConfigMonitor(multicastAddress, (int) multicastPort, multicastInterface, (int) clientPort, tls, aesKey, protocolsDelay, probes);
         }catch (IOException | ParseException e) {
-            e.printStackTrace();
+            e.printStackTrace();//TODO: handle exception
         }
 
         return null;
@@ -88,7 +88,7 @@ public class JsonReader {
 
             return new ConfigProbes(protocol, multicastAddress, multicastPort, multicastInterface, multicastDelay, unicastPort, aesKey);
         } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            e.printStackTrace();//TODO: handle exception
         }
         return null;
     }
