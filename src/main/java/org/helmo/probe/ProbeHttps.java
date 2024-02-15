@@ -2,7 +2,9 @@ package org.helmo.probe;
 
 import org.helmo.probe.Probe;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -15,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ProbeHttps extends Probe {
+    private ServerSocket serverSocket;
     private final HttpClient client;
     private boolean running;
     private final ConfigProbes configProbes;
@@ -34,6 +37,13 @@ public class ProbeHttps extends Probe {
     @Override
     public void start() {
         System.out.println("Démarrage du probe HTTPS pour l'URL : " + servicesURL);
+        try {
+            serverSocket = new ServerSocket(configProbes.unicastPort());
+            System.out.println("Server Socket créé sur le port " + configProbes.unicastPort());
+        } catch (IOException e) {
+            System.out.println("Impossible de créer le server socket sur le port " + configProbes.unicastPort() + " : " + e.getMessage());
+            return;
+        }
         running = true;
         scheduler.scheduleAtFixedRate(this::sendMulticastAnnouncement, 0, 90, TimeUnit.SECONDS);
         // Utiliser un thread pour gérer la boucle de collecte périodique
@@ -48,12 +58,38 @@ public class ProbeHttps extends Probe {
                 }
             }
         }).start();
+        new Thread(this::waitForConfig).start();
     }
+
+    private void waitForConfig() {
+        try (Socket socket = serverSocket.accept();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            String configLine;
+            StringBuilder configData = new StringBuilder();
+            while ((configLine = reader.readLine()) != null) {
+                configData.append(configLine).append("\n");
+                // Traitez ici la ligne de configuration si nécessaire
+            }
+            System.out.println("Configuration reçue: " + configData.toString());
+            // Ici, vous pouvez traiter l'ensemble de la configuration reçue
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la réception de la configuration: " + e.getMessage());
+        }
+        // Après avoir reçu la configuration, la connexion se ferme automatiquement grâce au try-with-resources
+    }
+
 
     @Override
     public void stop() {
         System.out.println("Arrêt du probe HTTPS pour l'URL : " + servicesURL);
         running = false;
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                System.out.println("Erreur lors de la fermeture du server socket: " + e.getMessage());
+            }
+        }
     }
 
     @Override
