@@ -1,4 +1,4 @@
-package org.helmo.probe;
+package org.helmo;
 
 import org.snmp4j.CommunityTarget;
 import org.snmp4j.PDU;
@@ -23,9 +23,6 @@ public class ProbeSNMP extends Probe {
         this.pollingInterval = pollingInterval;
     }
 
-    /**
-     * Une fois que le probe est démarré, il doit collecter des données à intervalles réguliers
-     */
     @Override
     public void start() {
         System.out.println("Start SNMP probe");
@@ -45,7 +42,7 @@ public class ProbeSNMP extends Probe {
         try {
             // Préparation de l'adresse et du transport
             Address targetAddress = GenericAddress.parse("udp:trkr.swilabus.com/161"); // TODO: ici
-            TransportMapping transport = new DefaultUdpTransportMapping();
+            TransportMapping<UdpAddress> transport = new DefaultUdpTransportMapping();
             transport.listen();
 
             // Création de la cible
@@ -74,7 +71,7 @@ public class ProbeSNMP extends Probe {
 
             snmp.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // TODO: remplacer la gestion de l'erreur
             System.out.println("Erreur lors de la collecte des données SNMP.");
         }
     }
