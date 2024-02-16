@@ -1,3 +1,4 @@
+/*
 package org.helmo;
 
 import org.snmp4j.CommunityTarget;
@@ -76,3 +77,4 @@ public class ProbeSNMP extends Probe {
         }
     }
 }
+*/
