@@ -1,5 +1,7 @@
 package org.helmo.protocole;
 
+import java.util.regex.Pattern;
+
 public class Protocole {
     // Expressions régulières réutilisées
     private static final String letter = "[A-Za-z]";
@@ -27,4 +29,20 @@ public class Protocole {
     private static final String state = "(?:OK|ALARM|DOWN|UNKNOWN)";
     private static final String message = character + "{1,200}";
 
+    public static void main(String[] args) {
+        // Exemple d'utilisation de certaines expressions régulières
+        String sampleText = "http://example.com/user:password!12345!67890";
+        System.out.println(url);
+
+        if (Pattern.matches(augmented_url, sampleText)) {
+            System.out.println("La chaîne correspond au pattern.");
+        } else {
+            System.out.println("La chaîne ne correspond pas au pattern.");
+        }
+
+        // Vous pouvez utiliser d'autres expressions régulières de manière similaire.
+    }
+
 }
+
+
