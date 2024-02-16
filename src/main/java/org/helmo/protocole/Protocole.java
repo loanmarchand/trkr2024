@@ -1,5 +1,6 @@
 package org.helmo.protocole;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Protocole {
@@ -21,18 +22,40 @@ public class Protocole {
     private static final String password_auth = password + "(?:#" + authentication + ")?";
     private static final String host = "(" + letter_digit + "|\\.|_|-)" + "{3,50}";
     private static final String path = "/(?:" + letter_digit + "|\\.|_|-|/){0,100}";
-    private static final String url = "(" + protocol + "://(?:" + username + "(?::" + password_auth + ")?@" + host + "(?::" + port + ")?(?:" + path + ")?))";
+    private static final String url = "((" + protocol + ")://(?:(" + username + ")(?::(" + password_auth + "))?@)?(" + host + ")(?::(" + port + "))?(" + path + "))";
     private static final String min = digit + "{1,8}";
     private static final String max = digit + "{1,8}";
     private static final String frequency = digit + "{1,8}";
-    private static final String augmented_url = id + "!" + url + "!" + min + "!" + max;
+    private static final String augmented_url ="(" + id + ")!(" + url + ")!(" + min + ")!(" + max + ")";
     private static final String state = "(?:OK|ALARM|DOWN|UNKNOWN)";
     private static final String message = character + "{1,200}";
 
+
+    //Client <--> Monitor deamon
+    private static final String newmon = "NEWMON" + sp +"("+ augmented_url +")"+ crlf;
+    private static final String newmon_resp = "(\\+OK|-ERR)("+sp+message+")?" + crlf;
+    private static final String listmon = "LISTMON" + crlf;
+    //impossible d'extraire les id ?? \/
+    private static final String mon = "MON" + "(" + sp +"(("+ id +")"+ "){0,100}" + crlf;
+    private static final String request = "REQUEST" + sp +"("+ id +")"+ crlf;
+    private static final String respond = "RESPOND" + sp +"(" + id +")" + sp +"(" + url +")" + sp + "(" + state +")" + crlf;
+
+
+    //Probe <--> Monitor deamon
+    //impossible d'extraire les aurl ?? \/
+    private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"((" + sp + augmented_url+ ")){0,100}" + crlf;
+    private static final String statusof = "STATUSOF" + sp +"(" + id + ")" + crlf;
+    private static final String status = "STATUS" + sp + "(" + id + ")" + sp + "(" + state + ")" + crlf;
+
+
+    //Multicast
+    private static final String probe = "PROBE" + sp + "(" + protocol + ")" + sp +"(" + port + ")" + crlf;
+    private static final String data = "DATA" + sp + "(" + protocol + ")" + sp + "(" + port +")" + crlf;
+
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
-        String sampleText = "http://example.com/user:password!12345!67890";
-        System.out.println(url);
+        String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
+        System.out.println(data);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
@@ -41,6 +64,7 @@ public class Protocole {
         }
 
         // Vous pouvez utiliser d'autres expressions régulières de manière similaire.
+
     }
 
 }
