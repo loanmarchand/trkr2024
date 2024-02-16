@@ -13,8 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Thread.sleep;
-
 public class ProbeHttps extends Probe {
     private ServerSocket serverSocket;
     private final HttpClient client;
@@ -27,7 +25,7 @@ public class ProbeHttps extends Probe {
         this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10)).build();
         this.running = false;
         this.configMonitor = configMonitor;
-        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.scheduler = Executors.newScheduledThreadPool(3);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Stopping the probe...");
             stop();
@@ -39,18 +37,17 @@ public class ProbeHttps extends Probe {
         System.out.println("Starting the HTTPS probe");
 
         if (!initializeServerSocket()) {
+            stop();
             return;
         }
 
         running = true;
-        scheduler.scheduleAtFixedRate(this::sendMulticastAnnouncement, 0, 90, TimeUnit.SECONDS);
-        startCollectDataThread();
-        listenForConfig();
+        startThreadLoop(this::sendMulticastAnnouncement, 90);
+        startThreadLoop(this::waitForConfig, 90);
+        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("https")));
+
     }
 
-    private void listenForConfig() {
-        startThreadLoop(this::waitForConfig, 90000);
-    }
 
     private boolean initializeServerSocket() {
         try {
@@ -63,29 +60,6 @@ public class ProbeHttps extends Probe {
         }
     }
 
-    private void startCollectDataThread() {
-        startThreadLoop(this::collectData,Long.parseLong(configMonitor.protocolsDelay().get("https")) * 1000L);
-    }
-
-    private void waitForConfig() {
-        try {
-            serverSocket.setSoTimeout(90000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
-            System.out.println("En attente de la configuration...");
-            try (Socket socket = serverSocket.accept(); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                String configLine;
-                StringBuilder configData = new StringBuilder();
-                while ((configLine = reader.readLine()) != null) {
-                    configData.append(configLine).append("\n");
-                }
-                System.out.println("Configuration reçue: " + configData);
-                // Ici, vous pouvez traiter l'ensemble de la configuration reçue
-            } catch (SocketTimeoutException e) {
-                System.out.println("Aucune configuration reçue dans l'intervalle actuel.");
-            }
-        } catch (IOException e) {
-            System.out.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
-        }
-    }
 
 
     @Override
@@ -101,7 +75,6 @@ public class ProbeHttps extends Probe {
         }
         System.out.println("Probe stopped.");
     }
-
     @Override
     protected void collectData() {
         for (Aurl aurl : configMonitor.probes()) {
@@ -109,6 +82,14 @@ public class ProbeHttps extends Probe {
                 collectData(aurl);
             }
         }
+    }
+
+    private void startThreadLoop(Runnable runnable, long delay) {
+        scheduler.scheduleWithFixedDelay(() -> {
+            if (running) {
+                runnable.run();
+            }
+        }, 0, delay, TimeUnit.SECONDS);
     }
 
     private void collectData(Aurl aurl) {
@@ -142,23 +123,34 @@ public class ProbeHttps extends Probe {
         }
     }
 
-    private void startThreadLoop(Runnable task, long sleepMillis) {
-        new Thread(() -> {
-            while (running){
-                task.run();
-                try {
-                    sleep(sleepMillis);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+    private void waitForConfig() {
+        try {
+            serverSocket.setSoTimeout(90000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
+            System.out.println("En attente de la configuration...");
+            try (Socket socket = serverSocket.accept(); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                String configLine;
+                StringBuilder configData = new StringBuilder();
+                while ((configLine = reader.readLine()) != null) {
+                    configData.append(configLine).append("\n");
                 }
+                System.out.println("Configuration reçue: " + configData);
+                // Ici, vous pouvez traiter l'ensemble de la configuration reçue
+            } catch (SocketTimeoutException e) {
+                System.out.println("Aucune configuration reçue dans l'intervalle actuel.");
             }
-        }).start();
+        } catch (IOException e) {
+            System.out.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
+        }
     }
+
+
+
+
 
     public static void main(String[] args) {
         JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe("protocol/src/main/resources/config-probes.json");
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("protocol/src/main/resources/config-monitor.json");
+        ConfigProbes configProbes = jsonReader.readConfigProbe("json/src/main/resources/config-probes.json");
+        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("json/src/main/resources/config-monitor.json");
         Probe probe = new ProbeHttps(configMonitor, configProbes);
         probe.start();
     }
