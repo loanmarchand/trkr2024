@@ -31,8 +31,10 @@ public class ProbeRunner {
         System.out.println("Probe SNMP");
 
         // Probe de test
-        String servicesURL = "1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0";
-        Probe probe = new ProbeSNMP(servicesURL, 1000);
+        String servicesURL1 = "1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0";
+        String servicesURL2 = "superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0";
+
+        Probe probe = new ProbeSNMP(servicesURL1, 1000);
 
         // Démarrer le probe
         probe.start();

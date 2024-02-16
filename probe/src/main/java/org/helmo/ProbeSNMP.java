@@ -1,11 +1,10 @@
 package org.helmo;
 
-import org.snmp4j.CommunityTarget;
-import org.snmp4j.PDU;
-import org.snmp4j.Snmp;
-import org.snmp4j.TransportMapping;
+import org.snmp4j.*;
 import org.snmp4j.event.ResponseEvent;
+import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
@@ -16,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 public class ProbeSNMP extends Probe {
     private final int pollingInterval;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private boolean isAurl = false;
 
 
     public ProbeSNMP(String servicesURL, int pollingInterval) {
@@ -38,41 +38,49 @@ public class ProbeSNMP extends Probe {
     protected void collectData() {
         System.out.println("Collect data from SNMP probe");
 
-        // TODO: il faudra récupérer les différentes informations de l'URL via les REGEX
+        // TODO: remplacer les variables suivantes par les valeurs de l'URL vie les REGEX
+        // Simule le résultat de la détection URL vs AURL
+        boolean isAurl = false;
+
+        // Variables pour SNMPv2c
+        String addressV2c = "udp:trkr.swilabus.com/161";
+        String community = "1amMemb3r0fTe4mSWILA";
+        String oidV2c = "1.3.6.1.4.1.2021.11.11.0";
+
         try {
-            // Préparation de l'adresse et du transport
-            Address targetAddress = GenericAddress.parse("udp:trkr.swilabus.com/161"); // TODO: ici
+            // Initialisation de TransportMapping et Snmp
             TransportMapping<UdpAddress> transport = new DefaultUdpTransportMapping();
             transport.listen();
-
-            // Création de la cible
-            CommunityTarget target = new CommunityTarget();
-            target.setCommunity(new OctetString("1amMemb3r0fTe4mSWILA")); // TODO: ici
-            target.setAddress(targetAddress);
-            target.setRetries(2);
-            target.setTimeout(1500);
-            target.setVersion(SnmpConstants.version2c); // TODO: ici
-
-            // Création du PDU
-            PDU pdu = new PDU();
-            pdu.add(new VariableBinding(new OID("1.3.6.1.4.1.2021.11.11.0"))); // TODO: ici
-            pdu.setType(PDU.GET);
-
-            // Envoi de la requête SNMP
             Snmp snmp = new Snmp(transport);
-            ResponseEvent response = snmp.get(pdu, target);
 
-            // Vérification et affichage de la réponse
-            if (response != null && response.getResponse() != null) {
-                System.out.println("Réponse SNMP reçue : " + response.getResponse().get(0).getVariable().toString());
-            } else {
-                System.out.println("Aucune réponse ou erreur lors de la requête SNMP.");
+            if (!isAurl) { // SNMPv2c
+                CommunityTarget target = new CommunityTarget();
+                target.setCommunity(new OctetString(community));
+                target.setAddress(GenericAddress.parse(addressV2c));
+                target.setRetries(2);
+                target.setTimeout(1500);
+                target.setVersion(SnmpConstants.version2c);
+
+                PDU pdu = new PDU();
+                pdu.add(new VariableBinding(new OID(oidV2c)));
+                pdu.setType(PDU.GET);
+
+                ResponseEvent response = snmp.get(pdu, target);
+
+                if (response != null && response.getResponse() != null) {
+                    System.out.println("Réponse SNMP reçue : " + response.getResponse().get(0).getVariable().toString());
+                } else {
+                    System.out.println("Aucune réponse ou erreur lors de la requête SNMP.");
+                }
+            } else { // SNMPv3
+
             }
 
             snmp.close();
         } catch (Exception e) {
-            e.printStackTrace(); // TODO: remplacer la gestion de l'erreur
+            e.printStackTrace();
             System.out.println("Erreur lors de la collecte des données SNMP.");
         }
     }
+
 }
