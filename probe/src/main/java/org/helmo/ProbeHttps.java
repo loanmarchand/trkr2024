@@ -104,6 +104,7 @@ public class ProbeHttps extends Probe {
             long timeElapsed = Duration.between(start, finish).toMillis(); // Calculer le temps écoulé en millisecondes
             System.out.println("Réponse reçue : " + response.statusCode() + " en " + timeElapsed + " ms");
             // Ici, vous pouvez traiter la réponse, par exemple vérifier le code de statut
+
         } catch (Exception e) {
             System.out.println("Erreur lors de la collecte des données : " + e.getMessage());
         }
@@ -129,12 +130,15 @@ public class ProbeHttps extends Probe {
             System.out.println("En attente de la configuration...");
             try (Socket socket = serverSocket.accept(); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                 String configLine;
-                StringBuilder configData = new StringBuilder();
-                while ((configLine = reader.readLine()) != null) {
-                    configData.append(configLine).append("\n");
-                }
-                System.out.println("Configuration reçue: " + configData);
+                configLine = reader.readLine();
+                System.out.println("Configuration reçue: " + configLine);
                 // Ici, vous pouvez traiter l'ensemble de la configuration reçue
+                /*
+                  Exemple de traitement de la configuration reçue
+                  1. Vérifier si la configuration est valide -> analyse.isValid(configLine)
+                  2. Liste des aurls -> analyse.getAurls(configLine)
+                 3. Metre a jour la configuration
+                 */
             } catch (SocketTimeoutException e) {
                 System.out.println("Aucune configuration reçue dans l'intervalle actuel.");
             }
