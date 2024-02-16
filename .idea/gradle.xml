@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/json" />
             <option value="$PROJECT_DIR$/monitor_daemon" />
             <option value="$PROJECT_DIR$/probe" />
+            <option value="$PROJECT_DIR$/protocol" />
           </set>
         </option>
       </GradleProjectSettings>

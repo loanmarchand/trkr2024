@@ -1,6 +1,5 @@
-package org.helmo.protocole;
+package org.helmo;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Protocole {
