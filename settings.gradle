@@ -1,3 +1,4 @@
 rootProject.name = 'trkr2024'
 include('client','json','monitor_daemon','probe')
+include 'protocol'
 

@@ -1,4 +1,4 @@
-package org.helmo.protocole;
+package org.helmo;
 
 public class Command {
     private String CommandType = null;
