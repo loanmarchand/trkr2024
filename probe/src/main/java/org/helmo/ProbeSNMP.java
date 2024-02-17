@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ProbeSNMP extends Probe {
+
     private final ScheduledExecutorService scheduler;
     private final ConfigMonitor configMonitor;
     private boolean running;
@@ -23,6 +24,7 @@ public class ProbeSNMP extends Probe {
         this.configMonitor = configMonitor;
         this.scheduler = Executors.newScheduledThreadPool(3);
         running = false;
+
     }
 
     @Override
@@ -70,7 +72,7 @@ public class ProbeSNMP extends Probe {
             UserTarget<Address> target = new UserTarget<>();
             target.setAddress(targetAddress);
             target.setVersion(SnmpConstants.version3);
-            target.setSecurityLevel(SecurityLevel.AUTH_NOPRIV);
+            target.setSecurityLevel(SecurityLevel.NOAUTH_NOPRIV);
             target.setSecurityName(new OctetString(aurl.url().user()));
             OctetString userName = new OctetString(aurl.url().user());
             OctetString authPass = new OctetString(aurl.url().password());
