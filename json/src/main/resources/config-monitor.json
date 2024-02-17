@@ -6,7 +6,7 @@
   "tls": false,
   "aesKey": "MaCleAESGenereeParMesSoins",
   "protocolsDelay": {
-    "snmp": 120,
+    "snmp": 10,
     "https": 10
   },
   "probes": {

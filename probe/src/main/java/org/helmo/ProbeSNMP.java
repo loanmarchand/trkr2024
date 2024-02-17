@@ -1,4 +1,3 @@
-/*
 package org.helmo;
 
 import org.snmp4j.*;
@@ -16,20 +15,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ProbeSNMP extends Probe {
-    private final int pollingInterval;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private boolean isAurl = false;
+    private final ScheduledExecutorService scheduler;
+    private final ConfigMonitor configMonitor;
+    private boolean running;
 
-
-    public ProbeSNMP(String servicesURL, int pollingInterval) {
-        super(servicesURL, pollingInterval);
-        this.pollingInterval = pollingInterval;
+    public ProbeSNMP(ConfigMonitor configMonitor, ConfigProbes configProbes) {
+        super(configProbes);
+        this.configMonitor = configMonitor;
+        this.scheduler = Executors.newScheduledThreadPool(3);
+        running = false;
     }
 
     @Override
     public void start() {
         System.out.println("Start SNMP probe");
-        scheduler.scheduleAtFixedRate(this::collectData, 0, pollingInterval, TimeUnit.SECONDS);
+        running = true;
+        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("snmp")));
     }
 
     @Override
@@ -39,69 +40,89 @@ public class ProbeSNMP extends Probe {
 
     @Override
     protected void collectData() {
-        System.out.println("Début de la collecte des données SNMP");
-        TransportMapping<? extends Address> transport = null;
-        try {
-            transport = new DefaultUdpTransportMapping();
-        } catch (SocketException e) {
-            throw new RuntimeException(e);
+        for (Aurl aurl : configMonitor.probes()) {
+            if (aurl.type().contains("snmp")) {
+                collectData(aurl);
+            }
         }
-        Snmp snmp = new Snmp(transport);
+    }
 
-        OctetString localEngineId = new OctetString(MPv3.createLocalEngineID());
-        USM usm = new USM(SecurityProtocols.getInstance(), localEngineId, 0);
-        SecurityModels.getInstance().addSecurityModel(usm);
-
-// Remplacer par vos valeurs
-        OctetString securityName = new OctetString("superswila");
-        OID authProtocol = AuthSHA.ID; // Utilisation de SHA pour l'authentification
-        OID privProtocol = PrivAES128.ID; // Supposition d'utilisation d'AES 128 pour le chiffrement
-        OctetString authPassphrase = new OctetString("TeamG0D$wila");
-        OctetString privPassphrase = new OctetString("iLikeGodSWILA2024");
-
-        snmp.getUSM().addUser(securityName, new UsmUser(securityName, authProtocol, authPassphrase, privProtocol, privPassphrase));
-        SecurityModels.getInstance().addSecurityModel(new TSM(localEngineId, false));
-
-        UserTarget target = new UserTarget();
-        target.setSecurityLevel(SecurityLevel.AUTH_PRIV);
-        target.setSecurityName(securityName);
-
-// Remplacer "your-target-ip" et "your-port-number" par vos valeurs
-        target.setAddress(GenericAddress.parse(String.format("udp:%s/%s", "v3.swi.la", "6161")));
-        target.setVersion(SnmpConstants.version3);
-        target.setRetries(2);
-        target.setTimeout(60000);
-
+    private void collectData(Aurl aurl) {
         try {
+            TransportMapping<?> transport = new DefaultUdpTransportMapping();
+            Snmp snmp = new Snmp(transport);
+
+            // Initialise SNMPv3
+            USM usm = new USM(SecurityProtocols.getInstance().addDefaultProtocols(), new OctetString(MPv3.createLocalEngineID()), 0);
+            SecurityModels.getInstance().addSecurityModel(usm);
+
             transport.listen();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Target target = createTarget(snmp,aurl);
+            sendRequest(snmp, target, aurl.url().path().substring(1));
+            snmp.close();
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
+        }
+    }
+
+    private Target createTarget(Snmp snmp, Aurl aurl) {
+        Address targetAddress = GenericAddress.parse(String.format("udp:%s/%d", aurl.url().host(), aurl.url().port()));
+        if (aurl.url().password()!=null) { // SNMPv3
+            UserTarget target = new UserTarget();
+            target.setAddress(targetAddress);
+            target.setVersion(SnmpConstants.version3);
+            target.setSecurityLevel(SecurityLevel.AUTH_NOPRIV);
+            target.setSecurityName(new OctetString(aurl.url().user()));
+            OctetString userName = new OctetString(aurl.url().user());
+            OctetString authPass = new OctetString(aurl.url().password());
+            UsmUser user = new UsmUser(userName, AuthSHA.ID, authPass, null, null);
+            snmp.getUSM().addUser(userName, user);
+
+            return target;
+        } else { // Par défaut, utilisez SNMPv2c
+            CommunityTarget target = new CommunityTarget();
+            target.setCommunity(new OctetString(aurl.url().user()));
+            target.setAddress(targetAddress);
+            target.setVersion(SnmpConstants.version2c);
+            return target;
+        }
+    }
+
+    private void sendRequest(Snmp snmp, Target target, String oid) throws IOException {
+        PDU pdu;
+        if (target.getVersion() == SnmpConstants.version3) {
+            pdu = new ScopedPDU(); // Utilisez ScopedPDU pour SNMPv3
+        } else {
+            pdu = new PDU(); // Utilisez PDU pour SNMPv1 et SNMPv2c
         }
 
-// Pour un SET, vous devez avoir une OID et une valeur à définir. Si c'est juste un GET, changez le type et l'OID en conséquence.
-        PDU pdu = new ScopedPDU();
-        pdu.add(new VariableBinding(new OID("1.3.6.1.4.1.2021.4.11.0"))); // Utilisez votre OID cible ici
-        pdu.setType(PDU.GET); // Changez à PDU.GET si vous voulez juste récupérer la valeur
-        ResponseEvent event = null;
-        try {
-            event = snmp.send(pdu, target);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        if (event != null) {
-            pdu = event.getResponse();
-            if (pdu != null && pdu.getErrorStatus() == PDU.noError) {
-                System.out.println("SNMPv3 operation Successful!");
-            } else {
-                System.out.println("SNMPv3 operation Unsuccessful. Error: " + (pdu != null ? pdu.getErrorStatusText() : "Response PDU is null"));
+        pdu.add(new VariableBinding(new OID(oid)));
+        pdu.setType(PDU.GET);
+
+        ResponseEvent response = snmp.get(pdu, target);
+        handleResponse(response);
+    }
+
+
+    private void handleResponse(ResponseEvent response) {
+        if (response != null && response.getResponse() != null) {
+            for (VariableBinding vb : response.getResponse().getVariableBindings()) {
+                System.out.println("Réponse SNMP: " + vb);
             }
         } else {
-            System.out.println("SNMP send unsuccessful.");
+            System.out.println("Aucune réponse de l'hôte SNMP.");
         }
+    }
 
+
+    private void startThreadLoop(Runnable runnable, long delay) {
+        scheduler.scheduleWithFixedDelay(() -> {
+            if (running) {
+                runnable.run();
+            }
+        }, 0, delay, TimeUnit.SECONDS);
     }
 
 
 
 }
-*/

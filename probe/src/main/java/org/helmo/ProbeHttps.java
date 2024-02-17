@@ -146,16 +146,4 @@ public class ProbeHttps extends Probe {
             System.out.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
         }
     }
-
-
-
-
-
-    public static void main(String[] args) {
-        JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe("json/src/main/resources/config-probes.json");
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("json/src/main/resources/config-monitor.json");
-        Probe probe = new ProbeHttps(configMonitor, configProbes);
-        probe.start();
-    }
 }
