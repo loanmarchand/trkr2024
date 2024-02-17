@@ -9,7 +9,6 @@ import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +56,7 @@ public class ProbeSNMP extends Probe {
             SecurityModels.getInstance().addSecurityModel(usm);
 
             transport.listen();
-            Target target = createTarget(snmp,aurl);
+            Target<Address> target = createTarget(snmp,aurl);
             sendRequest(snmp, target, aurl.url().path().substring(1));
             snmp.close();
         } catch (Exception e) {
@@ -65,10 +64,10 @@ public class ProbeSNMP extends Probe {
         }
     }
 
-    private Target createTarget(Snmp snmp, Aurl aurl) {
+    private Target<Address> createTarget(Snmp snmp, Aurl aurl) {
         Address targetAddress = GenericAddress.parse(String.format("udp:%s/%d", aurl.url().host(), aurl.url().port()));
         if (aurl.url().password()!=null) { // SNMPv3
-            UserTarget target = new UserTarget();
+            UserTarget<Address> target = new UserTarget<>();
             target.setAddress(targetAddress);
             target.setVersion(SnmpConstants.version3);
             target.setSecurityLevel(SecurityLevel.AUTH_NOPRIV);
@@ -80,7 +79,7 @@ public class ProbeSNMP extends Probe {
 
             return target;
         } else { // Par défaut, utilisez SNMPv2c
-            CommunityTarget target = new CommunityTarget();
+            CommunityTarget<Address> target = new CommunityTarget<>();
             target.setCommunity(new OctetString(aurl.url().user()));
             target.setAddress(targetAddress);
             target.setVersion(SnmpConstants.version2c);
@@ -88,7 +87,7 @@ public class ProbeSNMP extends Probe {
         }
     }
 
-    private void sendRequest(Snmp snmp, Target target, String oid) throws IOException {
+    private void sendRequest(Snmp snmp, Target<Address> target, String oid) throws IOException {
         PDU pdu;
         if (target.getVersion() == SnmpConstants.version3) {
             pdu = new ScopedPDU(); // Utilisez ScopedPDU pour SNMPv3
@@ -99,12 +98,12 @@ public class ProbeSNMP extends Probe {
         pdu.add(new VariableBinding(new OID(oid)));
         pdu.setType(PDU.GET);
 
-        ResponseEvent response = snmp.get(pdu, target);
+        ResponseEvent<Address> response = snmp.get(pdu, target);
         handleResponse(response);
     }
 
 
-    private void handleResponse(ResponseEvent response) {
+    private void handleResponse(ResponseEvent<Address> response) {
         if (response != null && response.getResponse() != null) {
             for (VariableBinding vb : response.getResponse().getVariableBindings()) {
                 System.out.println("Réponse SNMP: " + vb);
