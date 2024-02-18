@@ -69,8 +69,8 @@ public class ProbeSNMP extends Probe {
             TargetBuilder<?> targetBuilder = snmpBuilder.target(targetAddress);
             Target<?> userTarget = targetBuilder
                     .user(aurl.url().user(), targetEngineID)
-                    .auth(TargetBuilder.AuthProtocol.sha1).authPassphrase(aurl.url().password().split("#")[0])
-                    .priv(TargetBuilder.PrivProtocol.aes128).privPassphrase(aurl.url().password().split("#")[1])
+                    .auth(TargetBuilder.AuthProtocol.sha1).authPassphrase(aurl.url().password().split("#")[1])
+                    .priv(TargetBuilder.PrivProtocol.aes128).privPassphrase(aurl.url().password().split("#")[0])
                     .done()
                     .timeout(3 * 1000L).retries(1)
                     .build();
