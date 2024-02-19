@@ -10,7 +10,7 @@ public class Protocole {
     private static final String crlf = "\\x0D\\x0A";
     private static final String port = digit + "{1,5}";
     private static final String character = "[\\x20-\\xFF]";
-    private static final String character_spec = "[-_\\.=+\\*\\$°\\(\\)\\[\\]\\{\\}\\^]";
+    private static final String character_spec = "[-_.=+*$°()\\[\\]{}^]";
     private static final String character_pass = "(" + letter_digit + "|" + character_spec + ")";
     private static final String sp = "\\x20";
     private static final String id = letter_digit + "{5,10}";
@@ -25,14 +25,14 @@ public class Protocole {
     private static final String min = digit + "{1,8}";
     private static final String max = digit + "{1,8}";
     private static final String frequency = digit + "{1,8}";
-    private static final String augmented_url ="(" + id + ")!(" + url + ")!(" + min + ")!(" + max + ")";
+    private static final String augmented_url ="(" + id + ")!" + url + "!(" + min + ")!(" + max + ")";
     private static final String state = "(?:OK|ALARM|DOWN|UNKNOWN)";
     private static final String message = character + "{1,200}";
 
 
     //Client <--> Monitor deamon
     private static final String newmon = "NEWMON" + sp +"("+ augmented_url +")"+ crlf;
-    private static final String newmon_resp = "(\\+OK|-ERR)("+sp+message+")?" + crlf;
+    private static final String newmon_resp = "(\\+OK|-ERR)"+sp+"("+message+")?" + crlf;
     private static final String listmon = "LISTMON" + crlf;
     private static final String mon = "MON" + "(" + sp +"("+ id + ")){0,100}" + crlf;
     private static final String request = "REQUEST" + sp +"("+ id +")"+ crlf;
@@ -51,41 +51,41 @@ public class Protocole {
 
 
 
-    public String getNewmon(){
+    public static String getNewmon(){
         return newmon;
     }
-    public String getNewmon_resp(){
+    public static String getNewmon_resp(){
         return newmon_resp;
     }
-    public String getListmon(){
+    public static String getListmon(){
         return listmon;
     }
-    public String getMon(){
+    public static String getMon(){
         return mon;
     }
-    public String getRequest(){
+    public static String getRequest(){
         return request;
     }
-    public String getRespond(){
+    public static String getRespond(){
         return respond;
     }
 
 
-    public String getSetup(){
+    public static String getSetup(){
         return setup;
     }
-    public String getStatusof(){
+    public static String getStatusof(){
         return statusof;
     }
-    public String getStatus(){
+    public static String getStatus(){
         return status;
     }
 
 
-    public String getProbe(){
+    public static String getProbe(){
         return probe;
     }
-    public String getData(){
+    public static String getData(){
         return data;
     }
 
@@ -94,7 +94,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
-        System.out.println(mon);
+        System.out.println(newmon_resp);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
