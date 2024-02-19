@@ -1,10 +1,19 @@
 package org.helmo;
 
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class Command {
-    private String CommandType = null;
-    private String Aurl = null;
+    private String CommandType;
+    private String aurl = null;
     private String StatusNewmonresp = null;
     private String NewmonrespMessage = null;
+    private List<String> idList = null;
+    private String id = null;
+    private String urlEtPath = null;
+    private String state = null;
 
 
 
@@ -14,17 +23,26 @@ public class Command {
         this.CommandType = commandType;
         switch (commandType) {
             case "NEWMON" -> {
-                this.Aurl = data[0];
+                this.aurl = data[0];
             }
             case "NEWMON_RESP" -> {
                 this.StatusNewmonresp = data[0];
                 this.NewmonrespMessage = data[1];
             }
+            case "MON" -> {
+                this.idList = new ArrayList<>(Arrays.asList(data));
+                this.idList.remove(0);
+            }
+            case "REQUEST" -> {
+                this.id = data[0];
+            }
+            case "RESPOND" -> {
+                this.id = data[0];
+                this.urlEtPath = data[1];
+                this.state = data[2];
+            }
         }
     }
-
-
-
 
 
 
@@ -32,12 +50,24 @@ public class Command {
         return CommandType;
     }
     public String getAurl(){
-        return Aurl;
+        return aurl;
     }
     public String getStatusNewmonresp(){
         return StatusNewmonresp;
     }
     public String getNewmonrespMessage(){
         return NewmonrespMessage;
+    }
+    public List<String> getIdList(){
+        return new ArrayList<>(idList);
+    }
+    public String getId(){
+        return id;
+    }
+    public String getUrlEtPath(){
+        return urlEtPath;
+    }
+    public String getState(){
+        return state;
     }
 }

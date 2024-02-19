@@ -33,7 +33,7 @@ public class Protocole {
     //Client <--> Monitor deamon
     private static final String newmon = "NEWMON" + sp +"("+ augmented_url +")"+ crlf;
     private static final String newmon_resp = "(\\+OK|-ERR)"+sp+"("+message+")?" + crlf;
-    private static final String listmon = "LISTMON" ;
+    private static final String listmon = "LISTMON" + crlf;
     private static final String mon = "MON" + "(" + sp +"("+ id + ")){0,100}" + crlf;
     private static final String request = "REQUEST" + sp +"("+ id +")"+ crlf;
     private static final String respond = "RESPOND" + sp +"(" + id +")" + sp +"(" + url +")" + sp + "(" + state +")" + crlf;
@@ -94,7 +94,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
-        System.out.println(newmon_resp);
+        System.out.println(respond);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
