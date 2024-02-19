@@ -1,4 +1,3 @@
-/*
 package org.helmo;
 
 import org.snmp4j.*;
@@ -147,4 +146,3 @@ public class ProbeSNMP extends Probe {
 
 
 }
-*/
