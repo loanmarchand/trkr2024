@@ -11,13 +11,12 @@ public class Command {
 
 
     Command(String commandType,String... data){
+        this.CommandType = commandType;
         switch (commandType) {
             case "NEWMON" -> {
-                this.CommandType = "NEWMON";
                 this.Aurl = data[0];
             }
             case "NEWMON_RESP" -> {
-                this.CommandType = "NEWMON_RESP";
                 this.StatusNewmonresp = data[0];
                 this.NewmonrespMessage = data[1];
             }

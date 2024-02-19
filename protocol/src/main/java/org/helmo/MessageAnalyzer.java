@@ -1,7 +1,7 @@
 package org.helmo;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.helmo.Protocole;
+
 
 
 public class MessageAnalyzer {
@@ -27,16 +27,16 @@ public class MessageAnalyzer {
                 return null;
             }
         }
-        // Message Newmon_resp
-/*        if(Pattern.matches(Protocole.getNewmon_resp(),messageLine)){
-            Pattern pattern = Pattern.compile(Protocole.getNewmon());
+        // Message Listmon
+        if(Pattern.matches(Protocole.getListmon(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getListmon());
             Matcher matcher = pattern.matcher(messageLine);
             if (matcher.find()) {
-                return new Command("NEWMON_RESP",matcher.group(1),matcher.group(2));
+                return new Command("LISTMON");
             }else{
                 return null;
             }
-        }*/
+        }
 
 
 
@@ -47,8 +47,13 @@ public class MessageAnalyzer {
 
     public static void main(String[] args) {
 
-        Command testCommand = analyzeMessage("-ERR Aucune erreur ne s'est produite");
-        System.out.println(testCommand.getCommandType()+" + "+testCommand.getNewmonrespMessage());
+        Command testCommand = analyzeMessage("LISTMON");
+        if(testCommand != null){
+            System.out.println(testCommand.getCommandType());
+        }else{
+            System.out.println("Le renvoi de la méthode analyze est null");
+        }
+
 
     }
 }
