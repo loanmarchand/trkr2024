@@ -1,14 +1,23 @@
 package org.helmo;
 
+
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
+
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static org.helmo.ImapBuilder.*;
 
 public class ProbeIMAP extends Probe{
     private boolean running;
     private final ScheduledExecutorService scheduler;
     private final ConfigMonitor configMonitor;
-    public ProbeIMAP(ConfigProbes configProbes,ConfigMonitor configMonitor) {
+    public ProbeIMAP(ConfigMonitor configMonitor,ConfigProbes configProbes) {
         super(configProbes);
         this.configMonitor = configMonitor;
         this.scheduler = Executors.newScheduledThreadPool(3);
@@ -17,26 +26,44 @@ public class ProbeIMAP extends Probe{
     @Override
     public void start() {
         running = true;
-        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("imap")));
+        startThreadLoop(this::collectData, 10);
     }
 
     @Override
     public void stop() {
-
+        running = false;
+        scheduler.shutdown();
     }
 
     @Override
     protected void collectData() {
-        for (Aurl aurl : configMonitor.probes()) {
-            if (aurl.type().contains("imap")) {
-                collectData(aurl);
+        checkUnreadEmails();
+    }
+
+    public  void checkUnreadEmails( ) {
+        // Build a new authorized API client service.
+        try {
+            final NetHttpTransport HTTP_TRANSPORT = new com.google.api.client.http.javanet.NetHttpTransport();
+            Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+
+            // Request a list of all the messages in the user's mailbox.
+            String user = "me"; // Special value "me" can be used to indicate the authenticated user.
+            ListMessagesResponse messagesResponse = service.users().messages().list(user).setQ("is:unread").execute();
+            List<Message> messages = messagesResponse.getMessages();
+            //SI le nombre de messages non lus est supérieur à 10 pas ok sinon ok
+            if (messages.size() > 10) {
+                System.out.println("IMAP: KO");
+            } else {
+                System.out.println("IMAP: OK");
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void collectData(Aurl aurl) {
-
-    }
 
     private void startThreadLoop(Runnable runnable, long delay) {
         scheduler.scheduleWithFixedDelay(() -> {
