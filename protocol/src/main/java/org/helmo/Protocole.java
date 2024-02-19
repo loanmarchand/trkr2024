@@ -34,14 +34,12 @@ public class Protocole {
     private static final String newmon = "NEWMON" + sp +"("+ augmented_url +")"+ crlf;
     private static final String newmon_resp = "(\\+OK|-ERR)("+sp+message+")?" + crlf;
     private static final String listmon = "LISTMON" + crlf;
-    //impossible d'extraire les id ?? \/
-    private static final String mon = "MON" + "(" + sp +"(("+ id +")"+ "){0,100}" + crlf;
+    private static final String mon = "MON" + "(" + sp +"("+ id + ")){0,100}" + crlf;
     private static final String request = "REQUEST" + sp +"("+ id +")"+ crlf;
     private static final String respond = "RESPOND" + sp +"(" + id +")" + sp +"(" + url +")" + sp + "(" + state +")" + crlf;
 
 
     //Probe <--> Monitor deamon
-    //impossible d'extraire les aurl ?? \/
     private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"((" + sp + augmented_url+ ")){0,100}" + crlf;
     private static final String statusof = "STATUSOF" + sp +"(" + id + ")" + crlf;
     private static final String status = "STATUS" + sp + "(" + id + ")" + sp + "(" + state + ")" + crlf;
@@ -51,10 +49,52 @@ public class Protocole {
     private static final String probe = "PROBE" + sp + "(" + protocol + ")" + sp +"(" + port + ")" + crlf;
     private static final String data = "DATA" + sp + "(" + protocol + ")" + sp + "(" + port +")" + crlf;
 
+
+
+    public String getNewmon(){
+        return newmon;
+    }
+    public String getNewmon_resp(){
+        return newmon_resp;
+    }
+    public String getListmon(){
+        return listmon;
+    }
+    public String getMon(){
+        return mon;
+    }
+    public String getRequest(){
+        return request;
+    }
+    public String getRespond(){
+        return respond;
+    }
+
+
+    public String getSetup(){
+        return setup;
+    }
+    public String getStatusof(){
+        return statusof;
+    }
+    public String getStatus(){
+        return status;
+    }
+
+
+    public String getProbe(){
+        return probe;
+    }
+    public String getData(){
+        return data;
+    }
+
+
+
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
-        System.out.println(data);
+        System.out.println(mon);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
