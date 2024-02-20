@@ -95,7 +95,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
-        System.out.println(status);
+        System.out.println(data);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");

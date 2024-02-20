@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Command {
-    private String CommandType;
+    private String CommandType = null;
     private String aurl = null;
     private String StatusNewmonresp = null;
     private String NewmonrespMessage = null;
@@ -16,6 +16,8 @@ public class Command {
     private String state = null;
     private String frequency = null;
     private List<String> aurlList = null;
+    private String protocole = null;
+    private String port = null;
 
 
 
@@ -53,6 +55,10 @@ public class Command {
                 this.id = data[0];
                 this.state = data[1];
             }
+            case "PROBE", "DATA" -> {
+                this.protocole = data[0];
+                this.port = data[1];
+            }
         }
     }
 
@@ -87,5 +93,11 @@ public class Command {
     }
     public String getFrequency(){
         return frequency;
+    }
+    public String getProtocole(){
+        return protocole;
+    }
+    public String getPort(){
+        return port;
     }
 }

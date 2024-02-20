@@ -110,38 +110,26 @@ public class MessageAnalyzer {
 
 // MULTICAST
 
-        // Message Statusof
-/*        if(Pattern.matches(Protocole.getStatusof(),messageLine)){
-            Pattern pattern = Pattern.compile(Protocole.getStatusof());
+        // Message Probe
+        if(Pattern.matches(Protocole.getProbe(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getProbe());
             Matcher matcher = pattern.matcher(messageLine);
             if (matcher.find()) {
-                return new Command("STATUSOF", matcher.group(1));
+                return new Command("PROBE", matcher.group(1), matcher.group(3));
             }else{
                 return null;
             }
-        }*/
-
-
-
-        return null;
-    }
-
-
-
-    public static void main(String[] args) {
-
-        Command testCommand = analyzeMessage("STATUS saluteA DOWN\r\n");
-        if(testCommand != null){
-            System.out.println(testCommand.getCommandType());
-            System.out.println(testCommand.getId());
-            System.out.println(testCommand.getState());
-/*            for (String element : testCommand.getAurlList()) {
-                System.out.println(element);
-            }*/
-        }else{
-            System.out.println("Le renvoi de la méthode analyze est null");
         }
-
-
+        // Message Data
+        if(Pattern.matches(Protocole.getData(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getData());
+            Matcher matcher = pattern.matcher(messageLine);
+            if (matcher.find()) {
+                return new Command("DATA", matcher.group(1), matcher.group(3));
+            }else{
+                return null;
+            }
+        }
+        return new Command("NONE");
     }
 }
