@@ -1,12 +1,10 @@
 package org.helmo;
 
 public abstract class Probe {
-    protected String servicesURL;
-    protected int pollingInterval;
+    protected ConfigProbes configProbes;
 
-    public Probe(String servicesURL, int pollingInterval) {
-        this.servicesURL = servicesURL;
-        this.pollingInterval = pollingInterval;
+    public Probe(ConfigProbes configProbes) {
+        this.configProbes = configProbes;
     }
 
     /**
