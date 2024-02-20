@@ -14,6 +14,8 @@ public class Command {
     private String id = null;
     private String urlEtPath = null;
     private String state = null;
+    private String frequency = null;
+    private List<String> aurlList = null;
 
 
 
@@ -33,13 +35,23 @@ public class Command {
                 this.idList = new ArrayList<>(Arrays.asList(data));
                 this.idList.remove(0);
             }
-            case "REQUEST" -> {
+            case "REQUEST", "STATUSOF" -> {
                 this.id = data[0];
             }
             case "RESPOND" -> {
                 this.id = data[0];
                 this.urlEtPath = data[1];
                 this.state = data[2];
+            }
+            case "SETUP" -> {
+                this.aurlList = new ArrayList<>(Arrays.asList(data));
+                this.aurlList.remove(0);
+                this.frequency =  this.aurlList.get(0);
+                this.aurlList.remove(0);
+            }
+            case "STATUS" -> {
+                this.id = data[0];
+                this.state = data[1];
             }
         }
     }
@@ -69,5 +81,11 @@ public class Command {
     }
     public String getState(){
         return state;
+    }
+    public List<String> getAurlList(){
+        return new ArrayList<>(aurlList);
+    }
+    public String getFrequency(){
+        return frequency;
     }
 }

@@ -6,6 +6,9 @@ import java.util.regex.Pattern;
 
 public class MessageAnalyzer {
     public static Command analyzeMessage(String messageLine){
+
+// CLIENT <-> MONITOR DEAMON
+
         // Message Newmon
         if(Pattern.matches(Protocole.getNewmon(),messageLine)){
             Pattern pattern = Pattern.compile(Protocole.getNewmon());
@@ -58,7 +61,7 @@ public class MessageAnalyzer {
                 return null;
             }
         }
-        // Message Request
+        // Message Respond
         if(Pattern.matches(Protocole.getRespond(),messageLine)){
             Pattern pattern = Pattern.compile(Protocole.getRespond());
             Matcher matcher = pattern.matcher(messageLine);
@@ -70,6 +73,56 @@ public class MessageAnalyzer {
         }
 
 
+// PROBE <-> MONITOR DEAMON
+
+        // Message Setup
+        if(Pattern.matches(Protocole.getSetup(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getSetup());
+            Matcher matcher = pattern.matcher(messageLine);
+            if (matcher.find()) {
+                messageLine = messageLine.replaceAll("\\x0D\\x0A", "");
+                return new Command("SETUP",messageLine.split(" "));
+            }else{
+                return null;
+            }
+        }
+        // Message Statusof
+        if(Pattern.matches(Protocole.getStatusof(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getStatusof());
+            Matcher matcher = pattern.matcher(messageLine);
+            if (matcher.find()) {
+                return new Command("STATUSOF", matcher.group(1));
+            }else{
+                return null;
+            }
+        }
+        // Message Status
+        if(Pattern.matches(Protocole.getStatus(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getStatus());
+            Matcher matcher = pattern.matcher(messageLine);
+            if (matcher.find()) {
+                return new Command("STATUS", matcher.group(1), matcher.group(3));
+            }else{
+                return null;
+            }
+        }
+
+
+// MULTICAST
+
+        // Message Statusof
+/*        if(Pattern.matches(Protocole.getStatusof(),messageLine)){
+            Pattern pattern = Pattern.compile(Protocole.getStatusof());
+            Matcher matcher = pattern.matcher(messageLine);
+            if (matcher.find()) {
+                return new Command("STATUSOF", matcher.group(1));
+            }else{
+                return null;
+            }
+        }*/
+
+
+
         return null;
     }
 
@@ -77,13 +130,12 @@ public class MessageAnalyzer {
 
     public static void main(String[] args) {
 
-        Command testCommand = analyzeMessage("RESPOND myid15 https://youtube.com/sa OK\r\n");
+        Command testCommand = analyzeMessage("STATUS saluteA DOWN\r\n");
         if(testCommand != null){
             System.out.println(testCommand.getCommandType());
-            System.out.println(testCommand.getId()+"---");
-            System.out.println(testCommand.getUrlEtPath()+"---");
-            System.out.println(testCommand.getState()+"---");
-/*            for (String element : testCommand.getIdList()) {
+            System.out.println(testCommand.getId());
+            System.out.println(testCommand.getState());
+/*            for (String element : testCommand.getAurlList()) {
                 System.out.println(element);
             }*/
         }else{

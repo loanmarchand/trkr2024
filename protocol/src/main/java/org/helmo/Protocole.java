@@ -3,7 +3,8 @@ package org.helmo;
 import java.util.regex.Pattern;
 
 public class Protocole {
-    // Expressions régulières réutilisées
+
+// REGEX GENERALES
     private static final String letter = "[A-Za-z]";
     private static final String digit = "[0-9]";
     private static final String letter_digit = "(" + letter + "|" + digit + ")";
@@ -30,7 +31,7 @@ public class Protocole {
     private static final String message = character + "{1,200}";
 
 
-    //Client <--> Monitor deamon
+//CLIENT <--> MONITOR DEAMON
     private static final String newmon = "NEWMON" + sp +"("+ augmented_url +")"+ crlf;
     private static final String newmon_resp = "(\\+OK|-ERR)"+sp+"("+message+")?" + crlf;
     private static final String listmon = "LISTMON" + crlf;
@@ -39,13 +40,13 @@ public class Protocole {
     private static final String respond = "RESPOND" + sp +"(" + id +")" + sp +"(" + url +")" + sp + "(" + state +")" + crlf;
 
 
-    //Probe <--> Monitor deamon
+//PROBE <--> MONITOR DEAMON
     private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"((" + sp + augmented_url+ ")){0,100}" + crlf;
     private static final String statusof = "STATUSOF" + sp +"(" + id + ")" + crlf;
     private static final String status = "STATUS" + sp + "(" + id + ")" + sp + "(" + state + ")" + crlf;
 
 
-    //Multicast
+//MULTICAST
     private static final String probe = "PROBE" + sp + "(" + protocol + ")" + sp +"(" + port + ")" + crlf;
     private static final String data = "DATA" + sp + "(" + protocol + ")" + sp + "(" + port +")" + crlf;
 
@@ -94,7 +95,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
-        System.out.println(respond);
+        System.out.println(status);
 
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
