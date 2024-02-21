@@ -83,11 +83,23 @@ public class ProbeHttps extends Probe {
                 isChanged = collectData(aurl);
         }
         if (isChanged) {
-            sendAurlsToMonitor();
+            sendDataToMonitor();
         }
     }
 
-    private void sendAurlsToMonitor() {
+    private void sendDataToMonitor() {
+        //Envoyer en multicast que les données ont changé
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setBroadcast(true);
+            String message = MessageBuilder.buildDataMessage(configProbes.protocol(), configProbes.unicastPort());//TODO
+            byte[] buffer = message.getBytes();
+            InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, configProbes.multicastPort());
+            socket.send(packet);
+            System.out.println("Données envoyées en multicast : " + message);
+        } catch (IOException e) {
+            System.out.println("Erreur lors de l'envoi des données en multicast : " + e.getMessage());
+        }
 
     }
 
@@ -109,7 +121,6 @@ public class ProbeHttps extends Probe {
             Instant finish = Instant.now(); // Marquer la fin de la requête
 
             long timeElapsed = Duration.between(start, finish).toMillis(); // Calculer le temps écoulé en millisecondes
-            boolean isChanged = false;
             System.out.println("Réponse reçue : " + response.statusCode() + " en " + timeElapsed + " ms");
             // Ici, vous pouvez traiter la réponse, par exemple vérifier le code de statut
             if (response.statusCode() == 200 || response.statusCode() == 307) {
@@ -117,23 +128,23 @@ public class ProbeHttps extends Probe {
                     //vérifier si le status doit être changé
                     if (!Objects.equals(aurlsStatus.get(aurl), "OK")) {
                         aurlsStatus.put(aurl, "OK");
-                        isChanged = true;
+                        return true;
                     }
                 } else {
                     if (!Objects.equals(aurlsStatus.get(aurl), "SLOW")) {
                         aurlsStatus.put(aurl, "SLOW");
-                        isChanged = true;
+                        return true;
                     }
                 }
             } else {
                 if (!Objects.equals(aurlsStatus.get(aurl), "KO")) {
                     aurlsStatus.put(aurl, "KO");
-                    isChanged = true;
+                    return true;
                 }
             }
 
         } catch (Exception e) {
-            System.out.println("Erreur lors de la collecte des données : " + e.getMessage());
+            System.err.println("Erreur lors de la collecte des données : " + e.getMessage());
         }
         return false;
     }
@@ -148,7 +159,7 @@ public class ProbeHttps extends Probe {
             socket.send(packet);
             System.out.println("Annonce multicast envoyée : " + message);
         } catch (IOException e) {
-            System.out.println("Erreur lors de l'envoi de l'annonce multicast : " + e.getMessage());
+            System.err.println("Erreur lors de l'envoi de l'annonce multicast : " + e.getMessage());
         }
     }
 
@@ -175,10 +186,10 @@ public class ProbeHttps extends Probe {
                     }
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println("Aucune configuration reçue dans l'intervalle actuel.");
+                System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
             }
         } catch (IOException e) {
-            System.out.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
+            System.err.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
         }
     }
 }
