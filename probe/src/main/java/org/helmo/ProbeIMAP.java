@@ -18,18 +18,19 @@ import static org.helmo.ImapBuilder.*;
 public class ProbeIMAP extends Probe{
     private boolean running;
     private final ScheduledExecutorService scheduler;
-    private final Map<Integer, List<Aurl>> frequencyAurls;
+    private final Map<Aurl,String> aurlsStatus;
+    private int frequency;
 
     public ProbeIMAP(ConfigProbes configProbes) {
         super(configProbes);
-        this.frequencyAurls = new HashMap<>();
+        this.aurlsStatus = new HashMap<>();
         this.scheduler = Executors.newScheduledThreadPool(3);
     }
 
     @Override
     public void start() {
         running = true;
-        frequencyAurls.forEach((frequency, aurl) -> startThreadLoop(() -> collectData(aurl), frequency));
+
     }
 
     @Override
@@ -39,7 +40,7 @@ public class ProbeIMAP extends Probe{
     }
 
     @Override
-    protected void collectData(List<Aurl> aurl) {
+    protected void collectData() {
         checkUnreadEmails();
     }
 

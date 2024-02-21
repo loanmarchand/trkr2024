@@ -22,11 +22,13 @@ public class ProbeSNMP extends Probe {
 
     private final ScheduledExecutorService scheduler;
     private boolean running;
-    private final Map<Integer, List<Aurl>> frequencyAurls;
+    private final Map<Aurl,String> aurlsStatus;
+    private int frequency;
 
     public ProbeSNMP( ConfigProbes configProbes) {
         super(configProbes);
-        this.frequencyAurls = new HashMap<>();
+        this.aurlsStatus = new HashMap<>();
+        frequency = 0;
         this.scheduler = Executors.newScheduledThreadPool(3);
         running = false;
     }
@@ -35,7 +37,7 @@ public class ProbeSNMP extends Probe {
     public void start() {
         System.out.println("Start SNMP probe");
         running = true;
-        frequencyAurls.forEach((frequency, aurl) -> startThreadLoop(() -> collectData(aurl), frequency));
+
     }
 
     @Override
@@ -44,8 +46,8 @@ public class ProbeSNMP extends Probe {
     }
 
     @Override
-    protected void collectData(List<Aurl> aurl) {
-        for (Aurl value : aurl) {
+    protected void collectData() {
+        for (Aurl value : aurlsStatus.keySet()) {
             if (value.type().contains("snmp")) {
                 if (value.url().password() == null) {
                     collectDataV2(value);

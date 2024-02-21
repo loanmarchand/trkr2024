@@ -19,13 +19,15 @@ public class ProbeHttps extends Probe {
     private final HttpClient client;
     private boolean running;
     private final ScheduledExecutorService scheduler;
-    private final Map<Integer, List<Aurl>> frequencyAurls;
+    private final Map<Aurl, String> aurlsStatus;
+    private int frequency;
 
     public ProbeHttps(ConfigProbes configProbes) {
         super(configProbes);
         this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10)).build();
         this.running = false;
-        this.frequencyAurls = new HashMap<>();
+        this.aurlsStatus = new HashMap<>();
+        this.frequency = 0;
         this.scheduler = Executors.newScheduledThreadPool(3);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Stopping the probe...");
@@ -60,7 +62,6 @@ public class ProbeHttps extends Probe {
     }
 
 
-
     @Override
     public void stop() {
         running = false;
@@ -74,9 +75,20 @@ public class ProbeHttps extends Probe {
         }
         System.out.println("Probe stopped.");
     }
+
     @Override
-    protected void collectData(List<Aurl> aurl) {
-        aurl.forEach(this::collectData);
+    protected void collectData() {
+        boolean isChanged = false;
+        for (Aurl aurl : aurlsStatus.keySet()) {
+                isChanged = collectData(aurl);
+        }
+        if (isChanged) {
+            sendAurlsToMonitor();
+        }
+    }
+
+    private void sendAurlsToMonitor() {
+
     }
 
     private void startThreadLoop(Runnable runnable, long delay) {
@@ -87,7 +99,7 @@ public class ProbeHttps extends Probe {
         }, 0, delay, TimeUnit.SECONDS);
     }
 
-    private void collectData(Aurl aurl) {
+    private boolean collectData(Aurl aurl) {
         try {
             HttpRequest request = HttpRequest.newBuilder().uri(new URI(aurl.url().protocol() + "://" + aurl.url().host()))//TODO changer l'URI
                     .timeout(Duration.ofSeconds(5)).GET().build();
@@ -97,12 +109,33 @@ public class ProbeHttps extends Probe {
             Instant finish = Instant.now(); // Marquer la fin de la requête
 
             long timeElapsed = Duration.between(start, finish).toMillis(); // Calculer le temps écoulé en millisecondes
+            boolean isChanged = false;
             System.out.println("Réponse reçue : " + response.statusCode() + " en " + timeElapsed + " ms");
             // Ici, vous pouvez traiter la réponse, par exemple vérifier le code de statut
+            if (response.statusCode() == 200 || response.statusCode() == 307) {
+                if (timeElapsed < aurl.max() - aurl.min()) {
+                    //vérifier si le status doit être changé
+                    if (!Objects.equals(aurlsStatus.get(aurl), "OK")) {
+                        aurlsStatus.put(aurl, "OK");
+                        isChanged = true;
+                    }
+                } else {
+                    if (!Objects.equals(aurlsStatus.get(aurl), "SLOW")) {
+                        aurlsStatus.put(aurl, "SLOW");
+                        isChanged = true;
+                    }
+                }
+            } else {
+                if (!Objects.equals(aurlsStatus.get(aurl), "KO")) {
+                    aurlsStatus.put(aurl, "KO");
+                    isChanged = true;
+                }
+            }
 
         } catch (Exception e) {
             System.out.println("Erreur lors de la collecte des données : " + e.getMessage());
         }
+        return false;
     }
 
     private void sendMulticastAnnouncement() {
@@ -121,26 +154,24 @@ public class ProbeHttps extends Probe {
 
     private void waitForConfig() {
         try {
-            serverSocket.setSoTimeout(configProbes.multicastDelay()*1000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
+            serverSocket.setSoTimeout(configProbes.multicastDelay() * 1000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
             System.out.println("En attente de la configuration...");
             try (Socket socket = serverSocket.accept(); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                 String configLine;
                 configLine = reader.readLine();
                 System.out.println("Configuration reçue: " + configLine);
                 Command command = MessageAnalyzer.analyzeMessage(configLine);
-                if (command == null || Objects.equals(command.getCommandType(), "NONE")){
+                if (command == null || Objects.equals(command.getCommandType(), "NONE")) {
                     System.out.println("La configuration reçue est invalide.");
-                }
-                else if (Objects.equals(command.getCommandType(), "SETUP")){
+                } else if (Objects.equals(command.getCommandType(), "SETUP")) {
                     System.out.println("La configuration reçue est valide.");
                     List<Aurl> aurls = new ArrayList<>();
-                    //command.getAurlList().forEach(aurl -> aurls.add(new Aurl(aurl))); + vérifier que le type de aurl est égal a HTTPS
-                    if (frequencyAurls.containsKey(Integer.parseInt(command.getFrequency()))){
-                        frequencyAurls.get(Integer.parseInt(command.getFrequency())).addAll(aurls);
-                    } else {
-                        frequencyAurls.put(Integer.parseInt(command.getFrequency()), aurls);
-                        //La collecte de données est lancée pour chaque fréquence
-                        startThreadLoop(() -> collectData(frequencyAurls.get(Integer.parseInt(command.getFrequency()))), Integer.parseInt(command.getFrequency()));
+                    command.getAurlList().forEach(aurl -> aurls.add(new Aurl("test", new Url("", "", "", "", 0, ""), 0, 0)));
+                    //TODO:  mettre les vrais valleurs vérifier que le type de aurl est égal a HTTPS
+                    aurls.forEach(aurl -> aurlsStatus.putIfAbsent(aurl, "UNKNOWN"));
+                    if (frequency == 0) {
+                        frequency = Integer.parseInt(command.getFrequency());
+                        startThreadLoop(this::collectData, frequency);
                     }
                 }
             } catch (SocketTimeoutException e) {

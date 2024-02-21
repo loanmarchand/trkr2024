@@ -1,7 +1,5 @@
 package org.helmo;
 
-import java.util.List;
-
 public abstract class Probe {
     protected ConfigProbes configProbes;
 
@@ -22,5 +20,5 @@ public abstract class Probe {
     /**
      * En fonction de la config, la sondes doit collecter des données à intervalles réguliers.
      */
-    protected abstract void collectData(List<Aurl> aurl);
+    protected abstract void collectData();
 }
