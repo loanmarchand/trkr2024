@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,13 +19,13 @@ public class ProbeHttps extends Probe {
     private final HttpClient client;
     private boolean running;
     private final ScheduledExecutorService scheduler;
-    private final ConfigMonitor configMonitor;
+    private final Map<Integer, List<Aurl>> frequencyAurls;
 
-    public ProbeHttps(ConfigMonitor configMonitor, ConfigProbes configProbes) {
+    public ProbeHttps(ConfigProbes configProbes) {
         super(configProbes);
         this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10)).build();
         this.running = false;
-        this.configMonitor = configMonitor;
+        this.frequencyAurls = new HashMap<>();
         this.scheduler = Executors.newScheduledThreadPool(3);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Stopping the probe...");
@@ -42,10 +43,8 @@ public class ProbeHttps extends Probe {
         }
 
         running = true;
-        startThreadLoop(this::sendMulticastAnnouncement, 90);
-        startThreadLoop(this::waitForConfig, 90);
-        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("https")));
-
+        startThreadLoop(this::sendMulticastAnnouncement, configProbes.multicastDelay());
+        startThreadLoop(this::waitForConfig, configProbes.multicastDelay());
     }
 
 
@@ -76,12 +75,8 @@ public class ProbeHttps extends Probe {
         System.out.println("Probe stopped.");
     }
     @Override
-    protected void collectData() {
-        for (Aurl aurl : configMonitor.probes()) {
-            if (aurl.type().contains("http")) {
-                collectData(aurl);
-            }
-        }
+    protected void collectData(List<Aurl> aurl) {
+        aurl.forEach(this::collectData);
     }
 
     private void startThreadLoop(Runnable runnable, long delay) {
@@ -113,12 +108,12 @@ public class ProbeHttps extends Probe {
     private void sendMulticastAnnouncement() {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
-            String message = "Sonde HTTPS démarrée : ";//TODO changer le message
+            String message = MessageBuilder.buildProbeMessage(configProbes.protocol(), configProbes.unicastPort());
             byte[] buffer = message.getBytes();
             InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, configProbes.multicastPort());
             socket.send(packet);
-            System.out.println("Annonce multicast envoyée.");
+            System.out.println("Annonce multicast envoyée : " + message);
         } catch (IOException e) {
             System.out.println("Erreur lors de l'envoi de l'annonce multicast : " + e.getMessage());
         }
@@ -126,36 +121,33 @@ public class ProbeHttps extends Probe {
 
     private void waitForConfig() {
         try {
-            serverSocket.setSoTimeout(90000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
+            serverSocket.setSoTimeout(configProbes.multicastDelay()*1000); // Attendre la connexion pendant l'intervalle de l'annonce multicast
             System.out.println("En attente de la configuration...");
             try (Socket socket = serverSocket.accept(); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                 String configLine;
                 configLine = reader.readLine();
                 System.out.println("Configuration reçue: " + configLine);
-                // Ici, vous pouvez traiter l'ensemble de la configuration reçue
-                /*
-                  Exemple de traitement de la configuration reçue
-                  1. Vérifier si la configuration est valide -> analyse.isValid(configLine)
-                  2. Liste des aurls -> analyse.getAurls(configLine)
-                 3. Metre a jour la configuration
-                 */
+                Command command = MessageAnalyzer.analyzeMessage(configLine);
+                if (command == null || Objects.equals(command.getCommandType(), "NONE")){
+                    System.out.println("La configuration reçue est invalide.");
+                }
+                else if (Objects.equals(command.getCommandType(), "SETUP")){
+                    System.out.println("La configuration reçue est valide.");
+                    List<Aurl> aurls = new ArrayList<>();
+                    //command.getAurlList().forEach(aurl -> aurls.add(new Aurl(aurl))); + vérifier que le type de aurl est égal a HTTPS
+                    if (frequencyAurls.containsKey(Integer.parseInt(command.getFrequency()))){
+                        frequencyAurls.get(Integer.parseInt(command.getFrequency())).addAll(aurls);
+                    } else {
+                        frequencyAurls.put(Integer.parseInt(command.getFrequency()), aurls);
+                        //La collecte de données est lancée pour chaque fréquence
+                        startThreadLoop(() -> collectData(frequencyAurls.get(Integer.parseInt(command.getFrequency()))), Integer.parseInt(command.getFrequency()));
+                    }
+                }
             } catch (SocketTimeoutException e) {
                 System.out.println("Aucune configuration reçue dans l'intervalle actuel.");
             }
         } catch (IOException e) {
             System.out.println("Erreur lors de l'attente de la configuration: " + e.getMessage());
         }
-    }
-
-
-
-
-
-    public static void main(String[] args) {
-        JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe("json/src/main/resources/config-probes.json");
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("json/src/main/resources/config-monitor.json");
-        Probe probe = new ProbeHttps(configMonitor, configProbes);
-        probe.start();
     }
 }

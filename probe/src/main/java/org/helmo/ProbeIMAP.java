@@ -5,8 +5,11 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
+import org.checkerframework.checker.units.qual.A;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,17 +19,18 @@ import static org.helmo.ImapBuilder.*;
 public class ProbeIMAP extends Probe{
     private boolean running;
     private final ScheduledExecutorService scheduler;
-    private final ConfigMonitor configMonitor;
-    public ProbeIMAP(ConfigMonitor configMonitor,ConfigProbes configProbes) {
+    private final Map<Integer, List<Aurl>> frequencyAurls;
+
+    public ProbeIMAP(ConfigProbes configProbes) {
         super(configProbes);
-        this.configMonitor = configMonitor;
+        this.frequencyAurls = new HashMap<>();
         this.scheduler = Executors.newScheduledThreadPool(3);
     }
 
     @Override
     public void start() {
         running = true;
-        startThreadLoop(this::collectData, 10);
+        frequencyAurls.forEach((frequency, aurl) -> startThreadLoop(() -> collectData(aurl), frequency));
     }
 
     @Override
@@ -36,14 +40,14 @@ public class ProbeIMAP extends Probe{
     }
 
     @Override
-    protected void collectData() {
+    protected void collectData(List<Aurl> aurl) {
         checkUnreadEmails();
     }
 
     public  void checkUnreadEmails( ) {
         // Build a new authorized API client service.
         try {
-            final NetHttpTransport HTTP_TRANSPORT = new com.google.api.client.http.javanet.NetHttpTransport();
+            final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
             Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                     .setApplicationName(APPLICATION_NAME)
                     .build();
@@ -60,7 +64,7 @@ public class ProbeIMAP extends Probe{
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("IMAP: DOWN");
         }
     }
 
