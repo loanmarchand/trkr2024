@@ -48,7 +48,7 @@ public class Protocole {
 
 //MULTICAST
     private static final String probe = "PROBE" + sp + "(" + protocol + ")" + sp +"(" + port + ")" + crlf;
-    private static final String PROBE_MSG = "PROBE <protocol> <port> \r\n";
+    private static final String PROBE_MSG = "PROBE <protocol> <port>\r\n";
     private static final String data = "DATA" + sp + "(" + protocol + ")" + sp + "(" + port +")" + crlf;
 
 
