@@ -4,7 +4,6 @@ public class ProbeRunner {
     final static String CONFIG_PROBES_SNMP = "json/src/main/resources/config-probes-snmp.json";
     final static String CONFIG_PROBES_HTTPS = "json/src/main/resources/config-probes-http.json";
     final static String CONFIG_PROBES_IMAP = "json/src/main/resources/config-probes-imap.json";
-    final static String CONFIG_MONITOR = "json/src/main/resources/config-monitor.json";
 
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -14,7 +13,6 @@ public class ProbeRunner {
 
         String probeType = args[0].toLowerCase();
         JsonReader jsonReader = new JsonReader();
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor(CONFIG_MONITOR);
         switch (probeType) {
             case "https":
                 runHttpsProbe(jsonReader.readConfigProbe(CONFIG_PROBES_HTTPS));
