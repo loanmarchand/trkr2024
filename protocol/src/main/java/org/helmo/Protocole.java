@@ -166,7 +166,6 @@ public class Protocole {
         }
 
         // Vous pouvez utiliser d'autres expressions régulières de manière similaire.
-
     }
 
 }
