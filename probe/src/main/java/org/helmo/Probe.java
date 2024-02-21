@@ -21,4 +21,8 @@ public abstract class Probe {
      * En fonction de la config, la sondes doit collecter des données à intervalles réguliers.
      */
     protected abstract void collectData();
+
+    public ConfigProbes getConfigProbes() {
+        return configProbes;
+    }
 }

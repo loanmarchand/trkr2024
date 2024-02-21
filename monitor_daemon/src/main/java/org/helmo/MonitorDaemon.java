@@ -10,8 +10,6 @@ import java.util.List;
 public class MonitorDaemon {
     private final ConfigMonitor configMonitor;
     private MulticastSocket socket;
-    private NetworkInterface networkInterface;
-    private InetAddress group;
 
     public MonitorDaemon(ConfigMonitor configMonitor) {
         this.configMonitor = configMonitor;
@@ -20,9 +18,9 @@ public class MonitorDaemon {
     public void start() {
         System.out.println("Starting the monitor daemon");
         try {
-            this.group = InetAddress.getByName(configMonitor.multicastAdress());
+            InetAddress group = InetAddress.getByName(configMonitor.multicastAdress());
             this.socket = new MulticastSocket(configMonitor.multicastPort());
-            this.networkInterface = NetworkInterface.getByName(configMonitor.multicastInterface());
+            NetworkInterface networkInterface = NetworkInterface.getByName(configMonitor.multicastInterface());
             this.socket.joinGroup(new InetSocketAddress(group, configMonitor.multicastPort()), networkInterface);
             listenForMulticast();
         } catch (IOException e) {
