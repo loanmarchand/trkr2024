@@ -57,7 +57,7 @@ public class MonitorDaemon {
             switch (command.getCommandType()) {
                 case "PROBE":
                     List<Aurl> aurls = configMonitor.probes().stream()
-                            .filter(aurl -> aurl.type().equals(command.getProtocole()))
+                            .filter(aurl -> aurl.type().contains(command.getProtocole()))
                             .toList();
                     sendAurlsToProbes(aurls, command, probeAddress);
                     break;
