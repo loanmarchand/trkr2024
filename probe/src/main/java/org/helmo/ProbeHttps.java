@@ -108,7 +108,7 @@ public class ProbeHttps extends Probe {
     private void sendMulticastAnnouncement() {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
-            String message = MessageBuilder.buildProbeMessage(configProbes.protocol(), configProbes.unicastPort());
+            String message = MessageBuilder.buildProbe(configProbes.protocol(), configProbes.unicastPort());
             byte[] buffer = message.getBytes();
             InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, configProbes.multicastPort());

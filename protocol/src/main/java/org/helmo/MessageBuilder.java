@@ -2,7 +2,7 @@ package org.helmo;
 
 public class MessageBuilder {
 
-    public static String buildProbeMessage(String protocol, int port) {
-        return Protocole.getPROBE_MSG().replace("<protocol>", protocol).replace("<port>", String.valueOf(port));
+    public static String buildProbe(String protocol, int port) {
+        return Protocole.getProbeBuilder().replace("<protocol>", protocol).replace("<port>", String.valueOf(port));
     }
-    }
+}
