@@ -11,7 +11,9 @@ import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,12 +21,12 @@ import java.util.concurrent.TimeUnit;
 public class ProbeSNMP extends Probe {
 
     private final ScheduledExecutorService scheduler;
-    private final ConfigMonitor configMonitor;
     private boolean running;
+    private final Map<Integer, List<Aurl>> frequencyAurls;
 
-    public ProbeSNMP(ConfigMonitor configMonitor, ConfigProbes configProbes) {
+    public ProbeSNMP( ConfigProbes configProbes) {
         super(configProbes);
-        this.configMonitor = configMonitor;
+        this.frequencyAurls = new HashMap<>();
         this.scheduler = Executors.newScheduledThreadPool(3);
         running = false;
     }
@@ -33,7 +35,7 @@ public class ProbeSNMP extends Probe {
     public void start() {
         System.out.println("Start SNMP probe");
         running = true;
-        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("snmp")));
+        frequencyAurls.forEach((frequency, aurl) -> startThreadLoop(() -> collectData(aurl), frequency));
     }
 
     @Override
@@ -42,14 +44,14 @@ public class ProbeSNMP extends Probe {
     }
 
     @Override
-    protected void collectData() {
-        for (Aurl aurl : configMonitor.probes()) {
-            if (aurl.type().contains("snmp")) {
-                if (aurl.url().password() == null) {
-                    collectDataV2(aurl);
+    protected void collectData(List<Aurl> aurl) {
+        for (Aurl value : aurl) {
+            if (value.type().contains("snmp")) {
+                if (value.url().password() == null) {
+                    collectDataV2(value);
                 } else {
                     try {
-                        collectDataV3(aurl);
+                        collectDataV3(value);
                     } catch (IOException e) {
                         System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
                     }

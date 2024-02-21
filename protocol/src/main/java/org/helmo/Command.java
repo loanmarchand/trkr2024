@@ -23,7 +23,7 @@ public class Command {
 
 
 
-    Command(String commandType,String... data){
+    public Command(String commandType,String... data){
         this.CommandType = commandType;
         switch (commandType) {
             case "NEWMON" -> this.aurl = data[0];

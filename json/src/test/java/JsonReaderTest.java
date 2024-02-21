@@ -8,8 +8,7 @@ public class JsonReaderTest {
     @Test
     void testReadConfigMonitor() { //TODO : changer le path et renommer les tests
         JsonReader jsonReader = new JsonReader();
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("/Users/jillianrezette/Library/Mobile Documents/com~apple~CloudDocs/Helmo - Bac 2/Projet/trkr2024/ressources/config-monitor.json");
-
+        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("../json/src/test/resources/config-monitor.json");
         assertNotNull(configMonitor);
         assertEquals("224.0.0.254", configMonitor.multicastAdress());
         assertEquals(65001, configMonitor.multicastPort());
@@ -47,8 +46,7 @@ public class JsonReaderTest {
     @Test
     void testReadConfigProbe() {
         JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe("/Users/jillianrezette/Library/Mobile Documents/com~apple~CloudDocs/Helmo - Bac 2/Projet/trkr2024/ressources/config-probes.json");
-
+        ConfigProbes configProbes = jsonReader.readConfigProbe("../json/src/test/resources/config-probes-snmp.json");
         assertNotNull(configProbes);
         assertEquals("snmp", configProbes.protocol());
         assertEquals("224.0.0.254", configProbes.multicastAddress());
