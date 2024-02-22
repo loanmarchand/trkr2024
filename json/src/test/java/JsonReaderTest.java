@@ -34,7 +34,7 @@ public class JsonReaderTest {
         //"http3": "http3!https://www.swilabus.com/trkr1!0!1700",
         assertTrue(configMonitor.probes().contains(new Aurl("http3", new Url("https", null, null, "www.swilabus.com", -1, "/trkr1"), 0, 1700)));
 
-        //"http4": "http4!https://www.swilabus.com/trkr2!0!1800",
+        //"http4": "http4!https://www.swilabus.com/trkr2!0!1800"
         assertTrue(configMonitor.probes().contains(new Aurl("http4", new Url("https", null, null, "www.swilabus.com", -1, "/trkr2"), 0, 1800)));
 
         //"snmp1": "snmp1!snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0!10000!99999999",

@@ -34,7 +34,6 @@ public class URLParser {
         return null;
     }
 
-
     public static Aurl parseAugmentedUrl(String augmentedUrlString) {
         // Expression régulière pour analyser l'URL augmentée
         String augmentedUrlPattern = "(?<id>[A-Za-z0-9]{5,10})!(?<url>.+)!(?<min>[0-9]{1,8})!(?<max>[0-9]{1,8})";
