@@ -43,10 +43,24 @@ fn ui_builder() -> impl Widget<()> {
 
     let left_sidebar = set_list_view(monitored_services, left_sidebar);
 
-    // Créer la section de droite
-    let right_sidebar = Flex::column()
+    // Créer la section en haut à droite
+    let right_top_sidebar = Flex::column()
         .with_child(title_lvl_1_component("Monitorer un nouveau service").center())
         .with_flex_spacer(1.0)
+        .border(BORDER_COLOR, 1.0)
+        .expand_width();
+
+    // Créer la section en bas à droite
+    let right_bottom_sidebar = Flex::column()
+        .with_child(title_lvl_1_component("Etat du service").center())
+        .with_flex_spacer(1.0)
+        .border(BORDER_COLOR, 1.0)
+        .expand_width();
+
+    // Combinez les sections supérieure et inférieure dans right_sidebar
+    let right_sidebar = Flex::column()
+        .with_flex_child(right_top_sidebar, 1.0)
+        .with_flex_child(right_bottom_sidebar, 1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width()
         .expand_height();
