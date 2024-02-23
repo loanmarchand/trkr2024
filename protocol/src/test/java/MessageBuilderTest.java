@@ -11,7 +11,9 @@ public class MessageBuilderTest {
 
     @Test
     void NewmonBuildTest() {
-        assertEquals("NEWMON monid!https://salute.sal/ezajo!57575!54645654\r\n", MessageBuilder.buildNewmon("monid!https://salute.sal/ezajo!57575!54645654"));
+        Url url = new Url("https",null,null,"salute.sal",-1, "/ezajo");
+        Aurl aurl = new Aurl("monid",url,57575,54645654);
+        assertEquals("NEWMON monid!https://salute.sal/ezajo!57575!54645654\r\n", MessageBuilder.buildNewmon(aurl));
     }
     @Test
     void NewmonrespBuildTest() {
@@ -32,5 +34,14 @@ public class MessageBuilderTest {
         assertEquals("MON myid2 myid3\r\n", MessageBuilder.buildMon(idList));
         idList.remove(0);
         assertEquals("MON myid3\r\n", MessageBuilder.buildMon(idList));
+    }
+    @Test
+    void RequestBuildTest() {
+        assertEquals("REQUEST myid1\r\n", MessageBuilder.buildRequest("myid1"));
+    }
+    @Test
+    void RespondBuildTest() {
+        Url url = new Url("https",null,null,"salute.sal",-1, "/ezajo");
+        assertEquals("RESPOND myid1 https://salute.sal/ezajo ALARM\r\n", MessageBuilder.buildRespond("myid1",url,"ALARM"));
     }
 }

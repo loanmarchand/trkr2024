@@ -5,8 +5,8 @@ import java.util.List;
 public class MessageBuilder {
 
 
-    public static String buildNewmon(String aurl){
-        return Protocole.getNewmonBuild().replace("<aurl>",aurl);
+    public static String buildNewmon(Aurl aurl){
+        return Protocole.getNewmonBuild().replace("<aurl>",RegexBuilder.buildAurl(aurl));
     }
     public static String buildNewmonResp(String okOrErr){
         return Protocole.getNewmonrespBuild().replace("<+OK|-ERR>", okOrErr).replace(" <message?>","");
@@ -23,6 +23,19 @@ public class MessageBuilder {
             ids.append(" ").append(id);
         }
         return Protocole.getMonBuild().replace(" <ids>", ids.toString());
+    }
+    public static String buildRequest(String id){
+        return Protocole.getRequestBuild().replace("<id>",id);
+    }
+    public static String buildRespond(String id, Url url, String state){
+        return Protocole.getRespondBuild().replace("<id>",id).replace("<url>",RegexBuilder.buildUrl(url)).replace("<state>",state);
+    }
+
+
+    public static String buildSetup(String frequency,List<Aurl> aurlList){
+        String message = Protocole.getSetupBuild();
+        String aurlsLine = "";
+        return null;
     }
 
 
