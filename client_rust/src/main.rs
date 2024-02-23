@@ -1,7 +1,8 @@
 mod components;
 
-use druid::widget::{Button, Flex, Label, SizedBox};
+use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
+use druid_derive::{Data, Lens};
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
 use components::text::text_component;
@@ -10,17 +11,21 @@ use components::text::text_component;
 const BORDER_COLOR: Key<Color> =  druid::theme::BORDER_LIGHT;
 
 fn main() -> Result<(), PlatformError> {
+    let app_state = AppState {
+        input_new_url: String::new(),
+    };
+
     let main_window = WindowDesc::new(ui_builder())
         .title("Trkr Client")
         .set_window_state(WindowState::Maximized);
 
     AppLauncher::with_window(main_window)
-        .launch(())
+        .launch(app_state)
 }
 
-fn ui_builder() -> impl Widget<()> {
+fn ui_builder() -> impl Widget<(AppState)> {
     // Créer le titre centré dans un Flex
-    let header = Flex::row()
+    let header = Flex::<AppState>::row()
         .with_flex_spacer(1.0)
         .with_child(title_component("Trkr Client"))
         .with_flex_spacer(1.0)
@@ -41,11 +46,16 @@ fn ui_builder() -> impl Widget<()> {
         .with_child(title_lvl_1_component("Services monitorés").center())
         .with_spacer(8.0);
 
+
     let left_sidebar = set_list_view(monitored_services, left_sidebar);
 
     // Créer la section en haut à droite
-    let right_top_sidebar = Flex::column()
+    let right_top_sidebar = Flex::<AppState>::column()
         .with_child(title_lvl_1_component("Monitorer un nouveau service").center())
+        .with_child(text_component("Ajouter un nouveau service").center())
+        .with_child(TextBox::new().lens(AppState::input_new_url))
+        .with_spacer(8.0)
+        .with_child(Button::new("Ajouter").on_click(add_new_service))
         .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
@@ -58,7 +68,7 @@ fn ui_builder() -> impl Widget<()> {
         .expand_width();
 
     // Combinez les sections supérieure et inférieure dans right_sidebar
-    let right_sidebar = Flex::column()
+    let right_sidebar = Flex::<AppState>::column()
         .with_flex_child(right_top_sidebar, 1.0)
         .with_flex_child(right_bottom_sidebar, 1.0)
         .border(BORDER_COLOR, 1.0)
@@ -77,7 +87,7 @@ fn ui_builder() -> impl Widget<()> {
     let main_layout = Flex::column()
         .with_child(header)
         .with_flex_child(
-            Flex::row()
+            Flex::<AppState>::row()
                 .with_flex_child(left_sidebar, 1.0)
                 .with_flex_child(right_sidebar, 3.0),
             1.0,
@@ -87,14 +97,14 @@ fn ui_builder() -> impl Widget<()> {
     main_layout
 }
 
-fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<()>) -> SizedBox<()> {
+fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<(AppState)>) -> SizedBox<(AppState)> {
     let left_sidebar = monitored_services.iter().fold(left_sidebar, |column, service| {
-        let service_owned = service.to_string(); // Convertit `&str` en `String`
-        let processed_service = insert_line_breaks(&service_owned, 30); // Applique la fonction de prétraitement
+        let service_owned = service.to_string();
+        let processed_service = insert_line_breaks(&service_owned, 30);
 
         // Crée une nouvelle ligne pour chaque service
         let service_row = Flex::row()
-            .with_child(Label::new(processed_service).center()) // Utilise la chaîne traitée
+            .with_child(Label::new(processed_service).center())
             .with_spacer(8.0)
             .with_child(Button::new("Voir").on_click(move |_ctx, _data, _env| {
                 println!("Bouton 'Voir' cliqué pour le service: {}", service_owned);
@@ -119,9 +129,19 @@ fn insert_line_breaks(original: &str, max_length: usize) -> String {
         .enumerate()
         .fold(String::new(), |mut acc, (index, char)| {
             if index % max_length == 0 && index != 0 {
-                acc.push('\n'); // Insère un saut de ligne
+                acc.push('\n');
             }
             acc.push(char);
             acc
         })
+}
+
+// Méthode qui sera applée quand on veut ajouter un nouveau service
+fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
+    println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
+}
+
+#[derive(Clone, Data, Lens)]
+struct AppState {
+    input_new_url: String,
 }
