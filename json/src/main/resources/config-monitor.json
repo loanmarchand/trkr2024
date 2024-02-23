@@ -1,7 +1,7 @@
 {
   "multicastAddress": "224.0.0.254",
   "multicastPort": 65001,
-  "multicastInterface": "monInterfaceReseau_12345",
+  "multicastInterface": "enxf8e43bbeaf49",
   "clientPort": 12345,
   "tls": false,
   "aesKey": "MaCleAESGenereeParMesSoins",
