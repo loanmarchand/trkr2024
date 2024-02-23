@@ -13,6 +13,8 @@ const BORDER_COLOR: Key<Color> =  druid::theme::BORDER_LIGHT;
 fn main() -> Result<(), PlatformError> {
     let app_state = AppState {
         input_new_url: String::new(),
+        service_name: String::from("no_data"),
+        service_state: String::from("no_data"),
     };
 
     let main_window = WindowDesc::new(ui_builder())
@@ -42,8 +44,12 @@ fn ui_builder() -> impl Widget<(AppState)> {
     ];
 
     // Créer la section de gauche avec la liste des services monitorés
-    let left_sidebar = Flex::column()
+    let left_sidebar = Flex::<AppState>::column()
         .with_child(title_lvl_1_component("Services monitorés").center())
+        .with_spacer(8.0)
+        .with_child(Button::new("Actualiser").on_click(|_ctx, _data: &mut AppState, _env| {
+            println!("Bouton 'Actualiser' cliqué");
+        }))
         .with_spacer(8.0);
 
 
@@ -63,6 +69,8 @@ fn ui_builder() -> impl Widget<(AppState)> {
     // Créer la section en bas à droite
     let right_bottom_sidebar = Flex::column()
         .with_child(title_lvl_1_component("Etat du service").center())
+        .with_flex_spacer(1.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| data.service_name.clone() + " : " + &data.service_state))
         .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
@@ -103,13 +111,14 @@ fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<(AppState)>) 
         let processed_service = insert_line_breaks(&service_owned, 30);
 
         // Crée une nouvelle ligne pour chaque service
-        let service_row = Flex::row()
+        let service_row = Flex::<AppState>::row()
             .with_child(Label::new(processed_service).center())
             .with_spacer(8.0)
-            .with_child(Button::new("Voir").on_click(move |_ctx, _data, _env| {
-                println!("Bouton 'Voir' cliqué pour le service: {}", service_owned);
-            }))
-            .align_left();
+            .with_child(Button::new("Voir").on_click(watch_service))
+            .align_left()
+            .on_click(move |_ctx, data: &mut AppState, _env| {
+                data.service_name = service_owned.clone();
+            });
 
         column.with_child(service_row).with_spacer(2.0)
     });
@@ -141,7 +150,13 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
     println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
 }
 
+fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
+    println!("Bouton 'Voir' cliqué pour le service: {}", data.service_name);
+}
+
 #[derive(Clone, Data, Lens)]
 struct AppState {
     input_new_url: String,
+    service_name: String,
+    service_state: String,
 }
