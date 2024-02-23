@@ -1,8 +1,10 @@
 package org.helmo;
 
 public class ProbeRunner {
-    final static String CONFIG_PROBES = "json/src/main/resources/config-probes.json";
-    final static String CONFIG_MONITOR = "json/src/main/resources/config-monitor.json";
+    final static String CONFIG_PROBES_SNMP = "json/src/main/resources/config-probes-snmp.json";
+    final static String CONFIG_PROBES_HTTPS = "json/src/main/resources/config-probes-http.json";
+    final static String CONFIG_PROBES_IMAP = "json/src/main/resources/config-probes-imap.json";
+
     public static void main(String[] args) {
         if (args.length == 0) {
             System.out.println("Veuillez spécifier le type de sonde à exécuter ('https' ou 'snmp').");
@@ -10,15 +12,16 @@ public class ProbeRunner {
         }
 
         String probeType = args[0].toLowerCase();
-        JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe(CONFIG_PROBES);
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor(CONFIG_MONITOR);
+        JsonHelper jsonHelper = new JsonHelper();
         switch (probeType) {
             case "https":
-                runHttpsProbe(configProbes, configMonitor);
+                runHttpsProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_HTTPS));
                 break;
             case "snmp":
-                runSnmpProbe(configProbes, configMonitor);
+                runSnmpProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_SNMP));
+                break;
+            case "imap":
+                runImapProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_IMAP));
                 break;
             default:
                 System.out.println("Type de sonde non reconnu. Les options valides sont 'https' ou 'snmp'.");
@@ -26,14 +29,19 @@ public class ProbeRunner {
         }
     }
 
-
-    private static void runHttpsProbe(ConfigProbes configProbes, ConfigMonitor configMonitor) {
-        Probe probe = new ProbeHttps(configMonitor, configProbes);
+    private static void runImapProbe(ConfigProbes configProbes) {
+        ProbeAsbtract probe = new Probe(configProbes);
         probe.start();
     }
 
-    private static void runSnmpProbe(ConfigProbes configProbes, ConfigMonitor configMonitor) {
-        Probe probe = new ProbeSNMP(configMonitor, configProbes);
+
+    private static void runHttpsProbe(ConfigProbes configProbes) {
+        ProbeAsbtract probe = new Probe(configProbes);
+        probe.start();
+    }
+
+    private static void runSnmpProbe(ConfigProbes configProbes) {
+        ProbeAsbtract probe = new Probe(configProbes);
         probe.start();
     }
 }

@@ -10,46 +10,76 @@ import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ProbeSNMP extends Probe {
+public class ProbeSnmpRunable implements Runnable {
 
-    private final ScheduledExecutorService scheduler;
-    private final ConfigMonitor configMonitor;
-    private boolean running;
+    private BufferedReader in;
+    private PrintWriter out;
+    private Probe probe;
+    private final Map<Aurl, String> aurlsStatus;
+    private int frequency;
 
-    public ProbeSNMP(ConfigMonitor configMonitor, ConfigProbes configProbes) {
-        super(configProbes);
-        this.configMonitor = configMonitor;
-        this.scheduler = Executors.newScheduledThreadPool(3);
-        running = false;
+    public ProbeSnmpRunable(Socket socket, Probe probe) {
+        this.probe = probe;
+        this.aurlsStatus = new HashMap<>();
+        this.frequency = 0;
+        try {
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
+        }
     }
 
     @Override
-    public void start() {
-        System.out.println("Start SNMP probe");
-        running = true;
-        startThreadLoop(this::collectData, Long.parseLong(configMonitor.protocolsDelay().get("snmp")));
+    public void run() {
+        try {
+            System.out.println("En attente de la configuration...");
+            String configLine;
+            configLine = in.readLine();
+            System.out.println("Configuration reçue: " + configLine);
+            Command command = MessageAnalyzer.analyzeMessage(configLine);
+            if (command == null || Objects.equals(command.getCommandType(), "NONE")) {
+                System.out.println("La configuration reçue est invalide.");
+            } else if (Objects.equals(command.getCommandType(), "SETUP")) {
+                System.out.println("La configuration reçue est valide.");
+                List<Aurl> aurls = new ArrayList<>();
+                command.getAurlList().forEach(aurl -> aurls.add(new Aurl("test", new Url("", "", "", "", 0, ""), 0, 0)));
+                //TODO:  mettre les vrais valleurs vérifier que le type de aurl est égal a HTTPS
+                aurls.forEach(aurl -> aurlsStatus.putIfAbsent(aurl, "UNKNOWN"));
+                if (frequency == 0) {
+                    frequency = Integer.parseInt(command.getFrequency());
+                    probe.startThreadLoop(this::collectData, frequency);
+                }
+            }
+        } catch (SocketTimeoutException e) {
+            System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la lecture de la configuration: " + e.getMessage());
+        }
     }
 
-    @Override
-    public void stop() {
-        System.out.println("Stop SNMP probe");
-    }
 
-    @Override
-    protected void collectData() {
-        for (Aurl aurl : configMonitor.probes()) {
-            if (aurl.type().contains("snmp")) {
-                if (aurl.url().password() == null) {
-                    collectDataV2(aurl);
+    private void collectData() {
+        for (Aurl value : aurlsStatus.keySet()) {
+            if (value.type().contains("snmp")) {
+                if (value.url().password() == null) {
+                    collectDataV2(value);
                 } else {
                     try {
-                        collectDataV3(aurl);
+                        collectDataV3(value);
                     } catch (IOException e) {
                         System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
                     }
@@ -135,14 +165,6 @@ public class ProbeSNMP extends Probe {
         }
     }
 
-
-    private void startThreadLoop(Runnable runnable, long delay) {
-        scheduler.scheduleWithFixedDelay(() -> {
-            if (running) {
-                runnable.run();
-            }
-        }, 0, delay, TimeUnit.SECONDS);
-    }
 
 
 }

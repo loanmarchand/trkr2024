@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Command {
-    private String CommandType = null;
+    private final String CommandType;
     private String aurl = null;
     private String StatusNewmonresp = null;
     private String NewmonrespMessage = null;
@@ -23,12 +23,10 @@ public class Command {
 
 
 
-    Command(String commandType,String... data){
+    public Command(String commandType,String... data){
         this.CommandType = commandType;
         switch (commandType) {
-            case "NEWMON" -> {
-                this.aurl = data[0];
-            }
+            case "NEWMON" -> this.aurl = data[0];
             case "NEWMON_RESP" -> {
                 this.StatusNewmonresp = data[0];
                 this.NewmonrespMessage = data[1];
@@ -37,9 +35,7 @@ public class Command {
                 this.idList = new ArrayList<>(Arrays.asList(data));
                 this.idList.remove(0);
             }
-            case "REQUEST", "STATUSOF" -> {
-                this.id = data[0];
-            }
+            case "REQUEST", "STATUSOF" -> this.id = data[0];
             case "RESPOND" -> {
                 this.id = data[0];
                 this.urlEtPath = data[1];

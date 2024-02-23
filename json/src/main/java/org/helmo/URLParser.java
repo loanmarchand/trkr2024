@@ -27,6 +27,9 @@ public class URLParser {
             if (path != null && !path.isEmpty() && !path.startsWith("/")) {
                 path = "/" + path;
             }
+            else if (path == null) {
+                path = "/";
+            }
 
             return new Url(protocol, username, password, host, port, path);
         }
