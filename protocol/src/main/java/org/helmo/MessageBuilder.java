@@ -18,11 +18,11 @@ public class MessageBuilder {
         return Protocole.getListmonBuild();
     }
     public static String buildMon(List<String> idList){
-        String ids = "";
+        StringBuilder ids = new StringBuilder();
         for (String id: idList) {
-            ids += " "+id;
+            ids.append(" ").append(id);
         }
-        return Protocole.getMonBuild().replace(" <ids>",ids);
+        return Protocole.getMonBuild().replace(" <ids>", ids.toString());
     }
 
 
