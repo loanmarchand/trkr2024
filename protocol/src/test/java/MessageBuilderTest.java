@@ -44,4 +44,28 @@ public class MessageBuilderTest {
         Url url = new Url("https",null,null,"salute.sal",-1, "/ezajo");
         assertEquals("RESPOND myid1 https://salute.sal/ezajo ALARM\r\n", MessageBuilder.buildRespond("myid1",url,"ALARM"));
     }
+    @Test
+    void SetupBuildTest() {
+        Url url = new Url("https",null,null,"salute.sal",-1, "/ezajo");
+        Aurl aurl1 = new Aurl("myid1",url,12345,56789);
+        Aurl aurl2 = new Aurl("myid2",url,12345,56789);
+        List<Aurl> aurlList = List.of(aurl1,aurl2);
+        assertEquals("SETUP freque myid1!https://salute.sal/ezajo!12345!56789 myid2!https://salute.sal/ezajo!12345!56789\r\n", MessageBuilder.buildSetup("freque",aurlList));
+    }
+    @Test
+    void StatusofBuildTest(){
+        assertEquals("STATUSOF myid1\r\n", MessageBuilder.buildStatusof("myid1"));
+    }
+    @Test
+    void StatusBuildTest(){
+        assertEquals("STATUS myid1 ALARM\r\n", MessageBuilder.buildStatus("myid1", "ALARM"));
+    }
+    @Test
+    void ProbeBuildTest(){
+        assertEquals("PROBE https 25565\r\n", MessageBuilder.buildProbe("https", 25565));
+    }
+    @Test
+    void DataBuildTest(){
+        assertEquals("DATA https 25565\r\n", MessageBuilder.buildData("https", 25565));
+    }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 public class MessageBuilder {
 
 
+//CLIENT <--> MONITOR DEAMON builders
     public static String buildNewmon(Aurl aurl){
         return Protocole.getNewmonBuild().replace("<aurl>",RegexBuilder.buildAurl(aurl));
     }
@@ -32,14 +33,23 @@ public class MessageBuilder {
     }
 
 
+//PROBE <--> MONITOR DEAMON builders
     public static String buildSetup(String frequency,List<Aurl> aurlList){
-        String message = Protocole.getSetupBuild();
-        String aurlsLine = "";
-        return null;
+        StringBuilder aurlsLine = new StringBuilder();
+        for (Aurl aurl: aurlList) {
+            aurlsLine.append(" ").append(RegexBuilder.buildAurl(aurl));
+        }
+        return Protocole.getSetupBuild().replace("<frequency>",frequency).replace(" <aurls>",aurlsLine);
+    }
+    public static String buildStatusof(String id){
+        return Protocole.getStatusofBuild().replace("<id>",id);
+    }
+    public static String buildStatus(String id, String state){
+        return Protocole.getStatusBuild().replace("<id>",id).replace("<state>",state);
     }
 
 
-
+//MULTICAST
     public static String buildProbe(String protocol, int port) {
         return Protocole.getProbeBuilder().replace("<protocol>", protocol).replace("<port>", String.valueOf(port));
     }
