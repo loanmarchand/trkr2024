@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class JsonReader {
+public class JsonHelper {
 
     public ConfigMonitor readConfigMonitor(String fileName) {
         try {
@@ -87,4 +87,5 @@ public class JsonReader {
         }
         return null;
     }
+
 }

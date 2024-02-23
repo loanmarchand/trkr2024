@@ -80,7 +80,7 @@ public class MonitorDaemon {
     }
 
     public static void main(String[] args) {
-        JsonReader reader = new JsonReader();
+        JsonHelper reader = new JsonHelper();
         ConfigMonitor configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
         MonitorDaemon monitorDaemon = new MonitorDaemon(configMonitor);
         monitorDaemon.start();

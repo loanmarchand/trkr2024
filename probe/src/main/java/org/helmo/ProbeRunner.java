@@ -12,16 +12,16 @@ public class ProbeRunner {
         }
 
         String probeType = args[0].toLowerCase();
-        JsonReader jsonReader = new JsonReader();
+        JsonHelper jsonHelper = new JsonHelper();
         switch (probeType) {
             case "https":
-                runHttpsProbe(jsonReader.readConfigProbe(CONFIG_PROBES_HTTPS));
+                runHttpsProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_HTTPS));
                 break;
             case "snmp":
-                runSnmpProbe(jsonReader.readConfigProbe(CONFIG_PROBES_SNMP));
+                runSnmpProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_SNMP));
                 break;
             case "imap":
-                runImapProbe(jsonReader.readConfigProbe(CONFIG_PROBES_IMAP));
+                runImapProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_IMAP));
                 break;
             default:
                 System.out.println("Type de sonde non reconnu. Les options valides sont 'https' ou 'snmp'.");
@@ -30,18 +30,18 @@ public class ProbeRunner {
     }
 
     private static void runImapProbe(ConfigProbes configProbes) {
-        Probe probe = new ProbeIMAP(configProbes);
+        ProbeAsbtract probe = new Probe(configProbes);
         probe.start();
     }
 
 
     private static void runHttpsProbe(ConfigProbes configProbes) {
-        Probe probe = new ProbeHttps(configProbes);
+        ProbeAsbtract probe = new Probe(configProbes);
         probe.start();
     }
 
     private static void runSnmpProbe(ConfigProbes configProbes) {
-        Probe probe = new ProbeSNMP(configProbes);
+        ProbeAsbtract probe = new Probe(configProbes);
         probe.start();
     }
 }

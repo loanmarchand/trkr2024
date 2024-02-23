@@ -17,13 +17,13 @@ import java.util.*;
 public class ProbeHttpsRunable implements Runnable {
     private BufferedReader in;
     private PrintWriter out;
-    private ProbeHttps probeHttps;
+    private Probe probe;
     private final HttpClient client;
     private final Map<Aurl, String> aurlsStatus;
     private int frequency;
 
-    public ProbeHttpsRunable(Socket socket, ProbeHttps probeHttps) {
-        this.probeHttps = probeHttps;
+    public ProbeHttpsRunable(Socket socket, Probe probe) {
+        this.probe = probe;
         this.aurlsStatus = new HashMap<>();
         this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10)).build();
         this.frequency = 0;
@@ -53,7 +53,7 @@ public class ProbeHttpsRunable implements Runnable {
                     aurls.forEach(aurl -> aurlsStatus.putIfAbsent(aurl, "UNKNOWN"));
                     if (frequency == 0) {
                         frequency = Integer.parseInt(command.getFrequency());
-                        probeHttps.startThreadLoop(this::collectData, frequency);
+                        probe.startThreadLoop(this::collectData, frequency);
                     }
                 }
             } catch (SocketTimeoutException e) {
@@ -74,21 +74,21 @@ public class ProbeHttpsRunable implements Runnable {
             Instant start = Instant.now(); // Marquer le début de la requête
 
             client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApplyAsync(response -> getStatut(aurl, response, start))
+                    .thenApplyAsync(response -> setStatut(aurl, response, start))
                     .exceptionally(e -> {
                         System.err.println("Erreur lors de la collecte des données pour l'URL " + aurl.url().host() + " : " + e.getMessage());
                         return false; // En cas d'exception, considérer qu'aucune modification n'a été effectuée
                     })
                     .thenAccept(isChanged -> {
                         if (isChanged) {
-                            String message = MessageBuilder.buildData(probeHttps.getConfigProbes().protocol(), probeHttps.getConfigProbes().unicastPort());
-                            probeHttps.sendMulticastMessage(message);
+                            String message = MessageBuilder.buildData(probe.getConfigProbes().protocol(), probe.getConfigProbes().unicastPort());
+                            probe.sendMulticastMessage(message);
                         }
                     });
         });
     }
 
-    private Boolean getStatut(Aurl aurl, HttpResponse<String> response, Instant start) {
+    private Boolean setStatut(Aurl aurl, HttpResponse<String> response, Instant start) {
         Instant finish = Instant.now(); // Marquer la fin de la requête
         long timeElapsed = Duration.between(start, finish).toMillis(); // Calculer le temps écoulé en millisecondes
         System.out.println("Réponse reçue : " + response.statusCode() + " en " + timeElapsed + " ms");

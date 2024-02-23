@@ -3,12 +3,12 @@ import org.helmo.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JsonReaderTest {
+public class JsonHelperTest {
 
     @Test
     void testReadConfigMonitor() { //TODO : changer le path et renommer les tests
-        JsonReader jsonReader = new JsonReader();
-        ConfigMonitor configMonitor = jsonReader.readConfigMonitor("../json/src/test/resources/config-monitor.json");
+        JsonHelper jsonHelper = new JsonHelper();
+        ConfigMonitor configMonitor = jsonHelper.readConfigMonitor("../json/src/test/resources/config-monitor.json");
         assertNotNull(configMonitor);
         assertEquals("224.0.0.254", configMonitor.multicastAdress());
         assertEquals(65001, configMonitor.multicastPort());
@@ -45,8 +45,8 @@ public class JsonReaderTest {
 
     @Test
     void testReadConfigProbe() {
-        JsonReader jsonReader = new JsonReader();
-        ConfigProbes configProbes = jsonReader.readConfigProbe("../json/src/test/resources/config-probes-snmp.json");
+        JsonHelper jsonHelper = new JsonHelper();
+        ConfigProbes configProbes = jsonHelper.readConfigProbe("../json/src/test/resources/config-probes-snmp.json");
         assertNotNull(configProbes);
         assertEquals("snmp", configProbes.protocol());
         assertEquals("224.0.0.254", configProbes.multicastAddress());
