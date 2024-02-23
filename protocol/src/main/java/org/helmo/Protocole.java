@@ -52,6 +52,35 @@ public class Protocole {
 
 
 
+
+    private static final String AURL_BUILD = "<id>!<url>!<min>!<max>";
+    private static final String URLWUP_BUILD = "<protocole>://<username>:<password>@<host><path>";
+    private static final String URLWUPP_BUILD = "<protocole>://<username>:<password>@<host>:<port><path>";
+    private static final String URL_BUILD = "<protocole>://<host><path>";
+    private static final String URLP_BUILD = "<protocole>://<host>:<port><path>";
+
+
+//CLIENT <--> MONITOR DEAMON builders
+    private static final String NEWMON_BUILD = "NEWMON <aurl>\r\n";
+    private static final String NEWMONRESP_BUILD = "<+OK|-ERR> <message?>\r\n";
+    private static final String LISTMON_BUILD = "LISTMON\r\n";
+    private static final String MON_BUILD = "MON <ids>\r\n";
+    private static final String REQUEST_BUILD = "REQUEST <id>\r\n";
+    private static final String RESPOND_BUILD = "RESPOND <id> <url> <state>\r\n";
+
+
+//PROBE <--> MONITOR DEAMON builders
+    private static final String SETUP_BUILD = "SETUP <frequency> <aurls>\r\n";
+    private static final String STATUSOF_BUILD = "STATUSOF <id>\r\n";
+    private static final String STATUS_BUILD = "STATUS <id> <state>\r\n";
+
+
+//MULTICAST builders
+    private static final String PROBE_BUILD = "PROBE <protocol> <port>\r\n";
+    private static final String DATA_BUILD = "DATA <protocol> <port>\r\n";
+
+
+
     public static String getNewmon(){
         return newmon;
     }
@@ -92,6 +121,65 @@ public class Protocole {
 
 
 
+
+    public static String getAurlBuild(){
+        return AURL_BUILD;
+    }
+    public static String getUrlwupBuild(){
+        return URLWUP_BUILD;
+    }
+    public static String getUrlwuppBuild(){
+        return URLWUPP_BUILD;
+    }
+    public static String getUrlBuild(){
+        return URL_BUILD;
+    }
+    public static String getUrlpBuild(){
+        return URLP_BUILD;
+    }
+
+
+
+    public static String getNewmonBuild(){
+        return NEWMON_BUILD;
+    }
+    public static String getNewmonrespBuild(){
+        return NEWMONRESP_BUILD;
+    }
+    public static String getListmonBuild(){
+        return LISTMON_BUILD;
+    }
+    public static String getMonBuild(){
+        return MON_BUILD;
+    }
+    public static String getRequestBuild(){
+        return REQUEST_BUILD;
+    }
+    public static String getRespondBuild(){
+        return RESPOND_BUILD;
+    }
+
+
+    public static String getSetupBuild(){
+        return SETUP_BUILD;
+    }
+    public static String getStatusofBuild(){
+        return STATUSOF_BUILD;
+    }
+    public static String getStatusBuild(){
+        return STATUS_BUILD;
+    }
+
+
+    public static String getProbeBuilder(){
+        return PROBE_BUILD;
+    }
+    public static String getDataBuilder(){
+        return DATA_BUILD;
+    }
+
+
+
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
@@ -104,8 +192,8 @@ public class Protocole {
         }
 
         // Vous pouvez utiliser d'autres expressions régulières de manière similaire.
-
     }
+
 
 }
 
