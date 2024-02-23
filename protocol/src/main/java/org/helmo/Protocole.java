@@ -48,9 +48,30 @@ public class Protocole {
 
 //MULTICAST
     private static final String probe = "PROBE" + sp + "(" + protocol + ")" + sp +"(" + port + ")" + crlf;
-    private static final String PROBE_MSG = "PROBE <protocol> <port>\r\n";
     private static final String data = "DATA" + sp + "(" + protocol + ")" + sp + "(" + port +")" + crlf;
     private static final String DATA_MSG = "DATA <protocol> <port>\r\n";
+
+
+
+//CLIENT <--> MONITOR DEAMON builders
+    private static final String NEWMON_BUILD = "NEWMON <aurl>\r\n";
+    private static final String NEWMONRESP_BUILD = "<+OK|-ERR> <message?>\r\n";
+    private static final String LISTMON_BUILD = "LISTMON\r\n";
+    private static final String MON_BUILD = "MON <ids>\r\n";
+    private static final String REQUEST_BUILD = "REQUEST <id>\r\n";
+    private static final String RESPOND_BUILD = "RESPOND <id> <url> <state>\r\n";
+
+
+//PROBE <--> MONITOR DEAMON builders
+    private static final String SETUP_BUILD = "SETUP <frequency> <aurls>\r\n";
+    private static final String STATUSOF_BUILD = "STATUSOF <id>\r\n";
+    private static final String STATUS_BUILD = "STATUS <id> <state>\r\n";
+
+
+//MULTICAST builders
+    private static final String PROBE_BUILD = "PROBE <protocol> <port>\r\n";
+    private static final String DATA_BUILD = "DATA <protocol> <port>\r\n";
+
 
 
     public static String getNewmon(){
@@ -87,15 +108,51 @@ public class Protocole {
     public static String getProbe(){
         return probe;
     }
-
-    public static String getPROBE_MSG(){
-        return PROBE_MSG;
-    }
     public static String getData(){
         return data;
     }
     public static  String getDATA_MSG() {
         return DATA_MSG;
+    }
+
+
+
+    public static String getNewmonBuild(){
+        return NEWMON_BUILD;
+    }
+    public static String getNewmonrespBuild(){
+        return NEWMONRESP_BUILD;
+    }
+    public static String getListmonBuild(){
+        return LISTMON_BUILD;
+    }
+    public static String getMonBuild(){
+        return MON_BUILD;
+    }
+    public static String getRequestBuild(){
+        return REQUEST_BUILD;
+    }
+    public static String getRespondBuild(){
+        return RESPOND_BUILD;
+    }
+
+
+    public static String getSetupBuild(){
+        return SETUP_BUILD;
+    }
+    public static String getStatusofBuild(){
+        return STATUSOF_BUILD;
+    }
+    public static String getStatusBuild(){
+        return STATUS_BUILD;
+    }
+
+
+    public static String getProbeBuilder(){
+        return PROBE_BUILD;
+    }
+    public static String getDataBuilder(){
+        return DATA_BUILD;
     }
 
 
@@ -112,7 +169,6 @@ public class Protocole {
         }
 
         // Vous pouvez utiliser d'autres expressions régulières de manière similaire.
-
     }
 
 
