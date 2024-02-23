@@ -81,7 +81,7 @@ public class ProbeHttpsRunable implements Runnable {
                     })
                     .thenAccept(isChanged -> {
                         if (isChanged) {
-                            String message = MessageBuilder.buildDataMessage(probeHttps.getConfigProbes().protocol(), probeHttps.getConfigProbes().unicastPort());
+                            String message = MessageBuilder.buildData(probeHttps.getConfigProbes().protocol(), probeHttps.getConfigProbes().unicastPort());
                             probeHttps.sendMulticastMessage(message);
                         }
                     });

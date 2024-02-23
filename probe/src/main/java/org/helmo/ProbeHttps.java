@@ -32,7 +32,7 @@ public class ProbeHttps extends Probe {
         }
 
         running = true;
-        String message = MessageBuilder.buildProbeMessage(configProbes.protocol(), configProbes.unicastPort());
+        String message = MessageBuilder.buildProbe(configProbes.protocol(), configProbes.unicastPort());
         startThreadLoop(() -> sendMulticastMessage(message), configProbes.multicastDelay());
         while (running) {
             handleConnection();
