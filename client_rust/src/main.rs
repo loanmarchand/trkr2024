@@ -3,18 +3,31 @@ mod components;
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
 use druid_derive::{Data, Lens};
+use regex::Regex;
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
 use components::text::text_component;
 
 // Constantes
-const BORDER_COLOR: Key<Color> =  druid::theme::BORDER_LIGHT;
+const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
 
 fn main() -> Result<(), PlatformError> {
     let app_state = AppState {
         input_new_url: String::new(),
         service_name: String::from("no_data"),
         service_state: String::from("no_data"),
+        service_id: String::from("no_data"),
+        service_protocol: String::from("no_data"),
+        service_username: String::from("no_data"),
+        service_password: String::from("no_data"),
+        service_authentication: String::from("no_data"),
+        service_host: String::from("no_data"),
+        service_port: String::from("no_data"),
+        service_path: String::from("no_data"),
+        service_min: String::from("no_data"),
+        service_max: String::from("no_data"),
+        service_validation_message: String::from(""),
+        service_name_state: String::from("no_data"),
     };
 
     let main_window = WindowDesc::new(ui_builder())
@@ -40,20 +53,45 @@ fn ui_builder() -> impl Widget<(AppState)> {
         "https://www.swilabus.com/",
         "https://www.swilabus.be/",
         "https://www.swilabus.com/trkr1",
-        "https://www.swilabus.com/trkr2"
+        "https://www.swilabus.com/trkr2",
     ];
 
     // Créer la section de gauche avec la liste des services monitorés
     let left_sidebar = Flex::<AppState>::column()
         .with_child(title_lvl_1_component("Services monitorés").center())
         .with_spacer(8.0)
-        .with_child(Button::new("Actualiser").on_click(|_ctx, _data: &mut AppState, _env| {
-            println!("Bouton 'Actualiser' cliqué");
-        }))
+        .with_child(Button::new("Actualiser").on_click(update_service_list))
         .with_spacer(8.0);
 
 
     let left_sidebar = set_list_view(monitored_services, left_sidebar);
+
+    // Créer une section qui va afficher les différents éléments d'un service
+    let service_table = Flex::column()
+        .with_child(Label::new(|data: &AppState, _env: &_| "ID: ".to_string() + &data.service_id))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Protocol: ".to_string() + &data.service_protocol))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Username: ".to_string() + &data.service_username))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Password: ".to_string() + &data.service_password))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Authentication: ".to_string() + &data.service_authentication))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Host: ".to_string() + &data.service_host))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Port: ".to_string() + &data.service_port))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Path: ".to_string() + &data.service_path))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Min: ".to_string() + &data.service_min))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| "Max: ".to_string() + &data.service_max))
+        .with_spacer(8.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| data.service_validation_message.clone()))
+        .with_flex_spacer(1.0)
+        .border(BORDER_COLOR, 1.0)
+        .expand_width();
 
     // Créer la section en haut à droite
     let right_top_sidebar = Flex::<AppState>::column()
@@ -63,6 +101,8 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_spacer(8.0)
         .with_child(Button::new("Ajouter").on_click(add_new_service))
         .with_flex_spacer(1.0)
+        .with_child(service_table)
+        .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
 
@@ -70,7 +110,7 @@ fn ui_builder() -> impl Widget<(AppState)> {
     let right_bottom_sidebar = Flex::column()
         .with_child(title_lvl_1_component("Etat du service").center())
         .with_flex_spacer(1.0)
-        .with_child(Label::new(|data: &AppState, _env: &_| data.service_name.clone() + " : " + &data.service_state))
+        .with_child(Label::new(|data: &AppState, _env: &_| data.service_name_state.clone() + " : " + &data.service_state))
         .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
@@ -117,7 +157,7 @@ fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<(AppState)>) 
             .with_child(Button::new("Voir").on_click(watch_service))
             .align_left()
             .on_click(move |_ctx, data: &mut AppState, _env| {
-                data.service_name = service_owned.clone();
+                data.service_name_state = service_owned.clone();
             });
 
         column.with_child(service_row).with_spacer(2.0)
@@ -148,15 +188,114 @@ fn insert_line_breaks(original: &str, max_length: usize) -> String {
 // Méthode qui sera applée quand on veut ajouter un nouveau service
 fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
     println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
+
+    // On commence par remettre toutes les valeurs à "no_data"
+    data.service_name = String::from("no_data");
+    data.service_state = String::from("no_data");
+    data.service_id = String::from("no_data");
+    data.service_protocol = String::from("no_data");
+    data.service_username = String::from("no_data");
+    data.service_password = String::from("no_data");
+    data.service_authentication = String::from("no_data");
+    data.service_host = String::from("no_data");
+    data.service_port = String::from("no_data");
+    data.service_path = String::from("no_data");
+    data.service_min = String::from("no_data");
+    data.service_max = String::from("no_data");
+    data.service_validation_message = String::from("");
+
+    let re = Regex::new(r"^(?P<id>[A-Za-z0-9]{5,10})!(?P<protocol>[A-Za-z0-9]{3,15})://(?:(?P<username>[A-Za-z0-9]{3,50})(?::(?P<password>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50})(?:#(?P<authentication>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50}))?)?@)?(?P<host>[A-Za-z0-9.\-_]{3,50})(?::(?P<port>[0-9]{1,5}))?(?P<path>/[A-Za-z0-9.\-_/]{0,100})!(?P<min>[0-9]{1,8})!(?P<max>[0-9]{1,8})$").unwrap();
+
+    match re.captures(&data.input_new_url) {
+        Some(caps) => {
+            println!("ID: {}", caps.name("id").unwrap().as_str());
+            data.service_id = caps.name("id").unwrap().as_str().to_string();
+
+            println!("Protocol: {}", caps.name("protocol").unwrap().as_str());
+            data.service_protocol = caps.name("protocol").unwrap().as_str().to_string();
+
+            if let Some(username) = caps.name("username") {
+                println!("Username: {}", username.as_str());
+                data.service_username = username.as_str().to_string();
+            } else {
+                println!("Username: no_data");
+                data.service_username = String::from("no_data");
+            }
+
+            if let Some(password) = caps.name("password") {
+                println!("Password: {}", password.as_str());
+                data.service_password = password.as_str().to_string();
+            } else {
+                println!("Password: no_data");
+                data.service_password = String::from("no_data");
+            }
+
+            if let Some(authentication) = caps.name("authentication") {
+                println!("Authentication: {}", authentication.as_str());
+                data.service_authentication = authentication.as_str().to_string();
+            } else {
+                println!("Authentication: no_data");
+                data.service_authentication = String::from("no_data");
+            }
+
+            println!("Host: {}", caps.name("host").unwrap().as_str());
+            data.service_host = caps.name("host").unwrap().as_str().to_string();
+
+            if let Some(port) = caps.name("port") {
+                println!("Port: {}", port.as_str());
+                data.service_port = port.as_str().to_string();
+            } else {
+                println!("Port: no_data");
+                data.service_port = String::from("no_data");
+            }
+
+            if let Some(path) = caps.name("path") {
+                println!("Path: {}", path.as_str());
+                data.service_path = path.as_str().to_string();
+            } else {
+                println!("Path: no_data");
+                data.service_path = String::from("no_data");
+            }
+
+            println!("Min: {}", caps.name("min").unwrap().as_str());
+            data.service_min = caps.name("min").unwrap().as_str().to_string();
+
+            println!("Max: {}", caps.name("max").unwrap().as_str());
+            data.service_max = caps.name("max").unwrap().as_str().to_string();
+
+            data.service_name = data.input_new_url.clone();
+            data.service_validation_message = String::from(data.service_name.clone() + " est validé par la regex");
+        }
+        None => {
+            println!("L'URL n'est pas valide");
+            data.service_validation_message = String::from("L'URL n'est pas validé par la regex");
+        }
+    }
 }
 
 fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Voir' cliqué pour le service: {}", data.service_name);
+    println!("Bouton 'Voir' cliqué pour le service: {}", data.service_name_state);
+}
+
+fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
+    println!("Bouton 'Actualiser' cliqué");
 }
 
 #[derive(Clone, Data, Lens)]
 struct AppState {
     input_new_url: String,
     service_name: String,
+    service_name_state: String,
     service_state: String,
+    service_id: String,
+    service_protocol: String,
+    service_username: String,
+    service_password: String,
+    service_authentication: String,
+    service_host: String,
+    service_port: String,
+    service_path: String,
+    service_min: String,
+    service_max: String,
+    service_validation_message: String,
 }
