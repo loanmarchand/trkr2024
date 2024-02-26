@@ -294,7 +294,10 @@ fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::
 }
 
 fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Actualiser' cliqué");
+    // On construit la requête
+    let listmon_request = Protocol::build_listmon();
+
+    println!("Requete à envoyer au moniteur: {}", listmon_request);
 }
 
 #[derive(Clone, Data, Lens)]
