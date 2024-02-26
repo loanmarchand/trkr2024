@@ -290,7 +290,9 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
 }
 
 fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Voir' cliqué pour le service: {}", data.service_name_state);
+    let request_request = Protocol::build_request(&data.service_name_state);
+
+    println!("Requete à envoyer au moniteur: {}", request_request);
 }
 
 fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
