@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ProbeSnmpRunable implements Runnable {
+public class ProbeSnmpRunable implements Runnable, ProbeRunable {
 
     private BufferedReader in;
     private PrintWriter out;
@@ -166,5 +166,14 @@ public class ProbeSnmpRunable implements Runnable {
     }
 
 
-
+    @Override
+    public void updateProbe(Socket socket) {
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            run();
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la mise à jour du BufferedReader et du PrintWriter: " + e.getMessage());
+        }
+    }
 }

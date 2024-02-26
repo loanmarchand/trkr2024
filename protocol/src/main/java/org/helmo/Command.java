@@ -96,4 +96,24 @@ public class Command {
     public String getPort(){
         return port;
     }
+
+    @Override
+    public String toString() {
+        return "Command{" +
+                "CommandType='" + CommandType + '\'' +
+                ", aurl='" + aurl + '\'' +
+                ", StatusNewmonresp='" + StatusNewmonresp + '\'' +
+                ", NewmonrespMessage='" + NewmonrespMessage + '\'' +
+                ", idList=" + idList +
+                ", id='" + id + '\'' +
+                ", urlEtPath='" + urlEtPath + '\'' +
+                ", state='" + state + '\'' +
+                ", frequency='" + frequency + '\'' +
+                ", aurlList=" + aurlList +
+                ", protocole='" + protocole + '\'' +
+                ", port='" + port + '\'' +
+                '}';
+    }
+
+
 }

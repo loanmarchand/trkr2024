@@ -69,11 +69,13 @@ public class MonitorDaemon {
     }
 
     private void sendAurlsToProbes(List<Aurl> aurls, Command command, InetAddress probeAddress) {
+        System.out.println(command);
         // Example of sending AURLs to the probe
         try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort()));
              PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
-            aurls.forEach(aurl -> out.println(aurl.toString()));
-            System.out.println("AURLs sent to probe: " + aurls);
+            String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()+'s'), aurls);
+            System.out.println("Sending AURLs to probe: " + message);
+            out.print(message);
         } catch (IOException e) {
             System.out.println("Error sending AURLs to probe: " + e.getMessage());
         }

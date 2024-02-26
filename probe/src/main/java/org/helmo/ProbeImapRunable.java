@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.helmo.ImapBuilder.*;
 
-public class ProbeImapRunable implements Runnable {
+public class ProbeImapRunable implements Runnable , ProbeRunable{
     private BufferedReader in;
     private PrintWriter out;
     private Probe probe;
@@ -96,4 +96,14 @@ public class ProbeImapRunable implements Runnable {
     }
 
 
+    @Override
+    public void updateProbe(Socket socket) {
+        try {
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+            run();
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
+        }
+    }
 }

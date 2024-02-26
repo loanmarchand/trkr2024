@@ -10,6 +10,7 @@ public class Probe extends ProbeAsbtract {
     private ServerSocket serverSocket;
     private boolean running;
     private final ScheduledExecutorService scheduler;
+    private ProbeRunable probeRunable = null;
 
     public Probe(ConfigProbes configProbes) {
         super(configProbes);
@@ -95,17 +96,32 @@ public class Probe extends ProbeAsbtract {
             //Afficher le nombre de clients connectés
             Socket socket = serverSocket.accept();
             switch (configProbes.protocol()) {
-                case "https":
-                    Runnable probeHttpsRunable = new ProbeHttpsRunable(socket, this);
-                    new Thread(probeHttpsRunable).start();
+                case "http":
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeHttpsRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
                     break;
                 case "snmp":
-                    Runnable probeSnmpRunable = new ProbeSnmpRunable(socket, this);
-                    new Thread(probeSnmpRunable).start();
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeSnmpRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
                     break;
                 case "imap":
-                    Runnable probeImapRunable = new ProbeImapRunable(socket, this);
-                    new Thread(probeImapRunable).start();
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeImapRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
                     break;
             }
         } catch (IOException e) {

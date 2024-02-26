@@ -8,7 +8,7 @@ public class Protocole {
     private static final String letter = "[A-Za-z]";
     private static final String digit = "[0-9]";
     private static final String letter_digit = "(" + letter + "|" + digit + ")";
-    private static final String crlf = "\\x0D\\x0A";
+    private static final String crlf = "(\\x0D\\x0A)?";
     private static final String port = digit + "{1,5}";
     private static final String character = "[\\x20-\\xFF]";
     private static final String character_spec = "[-_.=+*$°()\\[\\]{}^]";
@@ -182,9 +182,13 @@ public class Protocole {
 
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
-        String sampleText = "monid!https://salute.sal/ezajo!57575!54645654";
+        String sampleText = "SETUP 10 http1!https://www.swilabus.com/!0!1500 http2!https://www.swilabus.be/!0!2000 http3!https://www.swilabus.com/trkr1!0!1700 http4!https://www.swilabus.com/trkr2!0!1800\r\n";
         System.out.println(data);
-
+        if (Pattern.matches(setup, sampleText)) {
+            System.out.println("La chaîne correspond au pattern.");
+        } else {
+            System.out.println("La chaîne ne correspond pas au pattern.");
+        }
         if (Pattern.matches(augmented_url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
         } else {
