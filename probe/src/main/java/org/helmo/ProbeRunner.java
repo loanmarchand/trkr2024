@@ -30,18 +30,18 @@ public class ProbeRunner {
     }
 
     private static void runImapProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 
 
     private static void runHttpsProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 
     private static void runSnmpProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 }

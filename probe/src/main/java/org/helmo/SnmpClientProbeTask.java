@@ -10,73 +10,17 @@ import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.util.*;
 
-public class ProbeSnmpRunable implements Runnable, ProbeRunable {
+public class SnmpClientProbeTask extends AbstractProbeTask {
 
-    private BufferedReader in;
-    private PrintWriter out;
-    private final Probe probe;
-    private final Map<Aurl, String> aurlsStatus;
-    private int frequency;
 
-    public ProbeSnmpRunable(Socket socket, Probe probe) {
-        this.probe = probe;
-        this.aurlsStatus = new HashMap<>();
-        this.frequency = 0;
-        try {
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out = new PrintWriter(socket.getOutputStream(), true);
-        } catch (Exception e) {
-            System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
-        }
+    public SnmpClientProbeTask(Socket socket, Probe probe) {
+        super(socket, probe);
     }
-
-    @Override
-    public void run() {
-        try {
-            System.out.println("En attente de la configuration...");
-            String configLine;
-            configLine = in.readLine();
-            System.out.println("Configuration reçue: " + configLine);
-            Command command = MessageAnalyzer.analyzeMessage(configLine);
-            if (command == null || Objects.equals(command.getCommandType(), "NONE")) {
-                System.out.println("La configuration reçue est invalide.");
-            } else if (Objects.equals(command.getCommandType(), "SETUP")) {
-                System.out.println("La configuration reçue est valide.");
-                List<Aurl> aurls = new ArrayList<>();
-                command.getAurlList().forEach(aurl -> aurls.add(new Aurl("test", new Url("", "", "", "", 0, ""), 0, 0)));
-                //TODO:  mettre les vrais valleurs vérifier que le type de aurl est égal a HTTPS
-                aurls.forEach(aurl -> aurlsStatus.putIfAbsent(aurl, "UNKNOWN"));
-                if (frequency == 0) {
-                    frequency = Integer.parseInt(command.getFrequency());
-                    probe.startThreadLoop(this::collectData, frequency);
-                }
-            } else if (Objects.equals(command.getCommandType(), "STATUSOF")) {
-                //TODO : a tester
-                String id = command.getId();
-                Aurl aurl = aurlsStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
-                if (aurl != null) {
-                    String message = MessageBuilder.buildStatus(id, aurlsStatus.get(aurl));
-                    out.print(message);
-                }
-
-            }
-        } catch (SocketTimeoutException e) {
-            System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
-        } catch (IOException e) {
-            System.out.println("Erreur lors de la lecture de la configuration: " + e.getMessage());
-        }
-    }
-
-
-    private void collectData() {
+    protected void collectData() {
         boolean hasChanged = false;
         for (Aurl value : aurlsStatus.keySet()) {
             if (value.type().contains("snmp")) {
@@ -84,7 +28,7 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
                     hasChanged = collectDataV2(value);
                 } else {
                     try {
-                        hasChanged=collectDataV3(value);
+                        hasChanged = collectDataV3(value);
                     } catch (IOException e) {
                         System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
                     }
@@ -134,8 +78,6 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
     }
 
     private boolean collectDataV2(Aurl aurl) {
-
-
         try (TransportMapping<?> transport = new DefaultUdpTransportMapping()) {
             Snmp snmp = new Snmp(transport);
             transport.listen();
@@ -144,7 +86,7 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
             target.setCommunity(new OctetString(aurl.url().user()));
             target.setAddress(targetAddress);
             target.setVersion(SnmpConstants.version2c);
-            return sendRequest(snmp, target, aurl.url().path().substring(1),aurl);
+            return sendRequest(snmp, target, aurl.url().path().substring(1), aurl);
         } catch (IOException e) {
             System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
             return false;
@@ -163,7 +105,7 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
     }
 
 
-    private boolean handleResponse(ResponseEvent<?> response,Aurl aurl) {
+    private boolean handleResponse(ResponseEvent<?> response, Aurl aurl) {
         String result = null;
         if (response != null && response.getResponse() != null) {
             for (VariableBinding vb : response.getResponse().getVariableBindings()) {
@@ -182,17 +124,5 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
             return true;
         }
         return false;
-    }
-
-
-    @Override
-    public void updateProbe(Socket socket) {
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
-            run();
-        } catch (IOException e) {
-            System.out.println("Erreur lors de la mise à jour du BufferedReader et du PrintWriter: " + e.getMessage());
-        }
     }
 }
