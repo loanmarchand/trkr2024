@@ -1,6 +1,6 @@
-import org.helmo.Aurl;
-import org.helmo.URLParser;
-import org.helmo.Url;
+import org.example.Aurl;
+import org.example.URLParser;
+import org.example.Url;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

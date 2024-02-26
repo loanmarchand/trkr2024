@@ -1,7 +1,4 @@
-package org.helmo;
-
-import org.helmo.Aurl;
-import org.helmo.Url;
+package org.example;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

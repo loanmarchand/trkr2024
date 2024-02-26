@@ -1,4 +1,4 @@
-package org.helmo;
+package org.example;
 
 public class ProbeRunner {
     final static String CONFIG_PROBES = "json/src/main/resources/config-probes.json";

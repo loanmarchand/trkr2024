@@ -1,4 +1,4 @@
-package org.helmo;
+package org.example;
 
 import java.util.regex.Pattern;
 
