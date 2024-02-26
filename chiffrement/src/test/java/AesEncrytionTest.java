@@ -1,4 +1,4 @@
-import org.example.AesEncryption;
+import org.helmo.AesEncryption;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
