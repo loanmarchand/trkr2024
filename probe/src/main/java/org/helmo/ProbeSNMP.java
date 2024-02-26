@@ -1,4 +1,4 @@
-package org.example;
+package org.helmo;
 
 import org.snmp4j.*;
 import org.snmp4j.event.ResponseEvent;

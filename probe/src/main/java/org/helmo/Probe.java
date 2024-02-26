@@ -1,4 +1,4 @@
-package org.example;
+package org.helmo;
 
 public abstract class Probe {
     protected ConfigProbes configProbes;

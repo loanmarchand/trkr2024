@@ -1,4 +1,4 @@
-package org.example;
+package org.helmo;
 
 public record ConfigProbes(
         String protocol,
