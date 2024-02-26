@@ -66,8 +66,8 @@ fn ui_builder() -> impl Widget<(AppState)> {
 
     let left_sidebar = set_list_view(monitored_services, left_sidebar);
 
-    // Créer une section qui va afficher les différents éléments d'un service
-    let service_table = Flex::column()
+    // left_service_table
+    let left_service_table = Flex::column()
         .with_child(Label::new(|data: &AppState, _env: &_| "ID: ".to_string() + &data.service_id))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Protocol: ".to_string() + &data.service_protocol))
@@ -78,6 +78,11 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Authentication: ".to_string() + &data.service_authentication))
         .with_spacer(8.0)
+        // Bordure en rouge
+        .border(Color::RED, 1.0);
+
+
+    let right_service_table = Flex::column()
         .with_child(Label::new(|data: &AppState, _env: &_| "Host: ".to_string() + &data.service_host))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Port: ".to_string() + &data.service_port))
@@ -88,10 +93,19 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Max: ".to_string() + &data.service_max))
         .with_spacer(8.0)
-        .with_child(Label::new(|data: &AppState, _env: &_| data.service_validation_message.clone()))
+        // Bordure en bleu
+        .border(Color::BLUE, 1.0);
+
+
+    // Créer une section qui va afficher les différents éléments d'un service
+    let service_table = Flex::row()
         .with_flex_spacer(1.0)
-        .border(BORDER_COLOR, 1.0)
-        .expand_width();
+        .with_flex_child(left_service_table, 1.0)
+        .with_flex_spacer(1.0)
+        .with_flex_child(right_service_table, 1.0)
+        // Bordure jaune
+        .border(Color::YELLOW, 1.0)
+        .center();
 
     // Créer la section en haut à droite
     let right_top_sidebar = Flex::<AppState>::column()
@@ -101,7 +115,9 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_spacer(8.0)
         .with_child(Button::new("Ajouter").on_click(add_new_service))
         .with_flex_spacer(1.0)
-        .with_child(service_table)
+        .with_child(service_table.center())
+        .with_flex_spacer(1.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| data.service_validation_message.clone()))
         .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
