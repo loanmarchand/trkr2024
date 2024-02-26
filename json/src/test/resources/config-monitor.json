@@ -7,7 +7,7 @@
   "aesKey": "BacDjYczQ/iZsyPtfOIh9yalb7So8W5td8fsHQFZKSXTFBUVSH6dpoAVyD5axV2Lut1jTxrCVS4EwdJ8RtePis5wFr4q1D2KGak5xXdI3qfkI9xJsUTeXC+iIUbk8dv219sThMO8WPscuKzD4E+7qbmSreQQZkGVHI9oWW6cZXinQKQUI7TbkzgXGVLKr6tMlk1gwtzEg/UCqOVS3p2XfoAMdpFU2PlpFLWcAe/BeoQz7Jv48f18ytH0Nlk4ULu7wpGCD+Eg5BUvE66F7ZaiVouMtRIy6HSyRIvKJWiCnmXe34Gw5v/28vZvQnLSs5MBORhCD8a4ktsY/yq0Y8HTP11BCyjXiklpMuqb2riFARA=",
   "protocolsDelay": {
     "snmp": 120,
-    "https": 120
+    "https": 10
   },
   "probes": {
     "http1": "http1!https://www.swilabus.com/!0!1500",

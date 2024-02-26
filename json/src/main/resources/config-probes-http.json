@@ -1,0 +1,9 @@
+{
+  "protocol": "http",
+  "multicastAddress": "224.0.0.254",
+  "multicastPort": 65001,
+  "multicastInterface": "enxf8e43bbeaf49",
+  "multicastDelay": 10,
+  "unicastPort": 65002,
+  "aesKey": "MaCleAESGenereeParMesSoins"
+}

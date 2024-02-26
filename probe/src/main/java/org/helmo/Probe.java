@@ -1,24 +1,131 @@
 package org.helmo;
 
-public abstract class Probe {
-    protected ConfigProbes configProbes;
+import java.io.IOException;
+import java.net.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class Probe extends ProbeAsbtract {
+    private ServerSocket serverSocket;
+    private boolean running;
+    private final ScheduledExecutorService scheduler;
+    private ProbeRunable probeRunable = null;
 
     public Probe(ConfigProbes configProbes) {
-        this.configProbes = configProbes;
+        super(configProbes);
+        this.running = false;
+
+        this.scheduler = Executors.newScheduledThreadPool(3);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Stopping the probe...");
+            stop();
+        }));
     }
 
-    /**
-     * Toute les 90 secondes, la sonde doit s'annoncer en multicast pour ensuite récupérer et mettre à jour les configs.
-     */
-    public abstract void start();
+    @Override
+    public void start() {
+        System.out.println("Starting the HTTPS probe");
 
-    /**
-     * La sonde doit se désinscrire du multicast et le programme doit se terminer.
-     */
-    public abstract void stop();
+        if (!initializeServerSocket()) {
+            stop();
+            return;
+        }
 
-    /**
-     * En fonction de la config, la sondes doit collecter des données à intervalles réguliers.
-     */
-    protected abstract void collectData();
+        running = true;
+        String message = MessageBuilder.buildProbe(configProbes.protocol(), configProbes.unicastPort());
+        startThreadLoop(() -> sendMulticastMessage(message), configProbes.multicastDelay());
+        while (running) {
+            handleConnection();
+        }
+    }
+
+
+
+
+
+    @Override
+    public void stop() {
+        running = false;
+        scheduler.shutdownNow();
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                System.out.println("Error closing the server socket: " + e.getMessage());
+            }
+        }
+        System.out.println("Probe stopped.");
+    }
+
+
+    @Override
+    public void startThreadLoop(Runnable runnable, long delay) {
+        scheduler.scheduleWithFixedDelay(() -> {
+            if (running) {
+                runnable.run();
+            }
+        }, 0, delay, TimeUnit.SECONDS);
+    }
+    @Override
+    public void sendMulticastMessage(String message) {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setBroadcast(true);
+            byte[] buffer = message.getBytes();
+            InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, configProbes.multicastPort());
+            socket.send(packet);
+            System.out.println("Annonce multicast envoyée : " + message);
+        } catch (IOException e) {
+            System.err.println("Erreur lors de l'envoi de l'annonce multicast : " + e.getMessage());
+        }
+    }
+    private boolean initializeServerSocket() {
+        try {
+            serverSocket = new ServerSocket(configProbes.unicastPort());
+            System.out.println("Server Socket created on port " + configProbes.unicastPort());
+            return true;
+        } catch (IOException e) {
+            System.out.println("Unable to create the server socket on port " + configProbes.unicastPort() + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void handleConnection() {
+        try{
+            //Afficher le nombre de clients connectés
+            Socket socket = serverSocket.accept();
+            switch (configProbes.protocol()) {
+                case "http":
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeHttpsRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
+                    break;
+                case "snmp":
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeSnmpRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
+                    break;
+                case "imap":
+                    if (probeRunable == null) {
+                        probeRunable = new ProbeImapRunable(socket, this);
+                        new Thread(probeRunable).start();
+                    }
+                    else {
+                        probeRunable.updateProbe(socket);
+                    }
+                    break;
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur lors de l'acceptation de la connexion : " + e.getMessage());
+        }
+    }
 }

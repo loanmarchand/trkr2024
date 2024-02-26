@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/chiffrement" />
             <option value="$PROJECT_DIR$/client" />
+            <option value="$PROJECT_DIR$/domains" />
             <option value="$PROJECT_DIR$/json" />
             <option value="$PROJECT_DIR$/monitor_daemon" />
             <option value="$PROJECT_DIR$/probe" />
