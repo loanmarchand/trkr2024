@@ -1,3 +1,6 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
 pub(crate) struct Protocol;
 
 impl Protocol {
@@ -14,4 +17,14 @@ impl Protocol {
     pub fn build_request(id: &str) -> String {
         Self::REQUEST_BUILD.replace("<id>", id)
     }
+}
+
+lazy_static! {
+    static ref AURL_REGEX: Regex = Regex::new(
+        r"^(?P<id>[A-Za-z0-9]{5,10})!(?P<protocol>[A-Za-z0-9]{3,15})://(?:(?P<username>[A-Za-z0-9]{3,50})(?::(?P<password>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50})(?:#(?P<authentication>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50}))?)?@)?(?P<host>[A-Za-z0-9.\-_]{3,50})(?::(?P<port>[0-9]{1,5}))?(?P<path>/[A-Za-z0-9.\-_/]{0,100})!(?P<min>[0-9]{1,8})!(?P<max>[0-9]{1,8})$"
+    ).unwrap();
+}
+
+pub fn get_aurl_regex() -> &'static Regex {
+    &AURL_REGEX
 }

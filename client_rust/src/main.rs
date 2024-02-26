@@ -4,11 +4,11 @@ mod protocol;
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
 use druid_derive::{Data, Lens};
-use regex::Regex;
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
 use components::text::text_component;
-use protocol::protocol::Protocol; // dossier::fichier::struct
+use protocol::protocol::Protocol;
+use crate::protocol::protocol::get_aurl_regex; // dossier::fichier::struct
 
 // Constantes
 const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
@@ -216,9 +216,9 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
     data.service_max = String::from("no_data");
     data.service_validation_message = String::from("");
 
-    let re = Regex::new(r"^(?P<id>[A-Za-z0-9]{5,10})!(?P<protocol>[A-Za-z0-9]{3,15})://(?:(?P<username>[A-Za-z0-9]{3,50})(?::(?P<password>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50})(?:#(?P<authentication>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50}))?)?@)?(?P<host>[A-Za-z0-9.\-_]{3,50})(?::(?P<port>[0-9]{1,5}))?(?P<path>/[A-Za-z0-9.\-_/]{0,100})!(?P<min>[0-9]{1,8})!(?P<max>[0-9]{1,8})$").unwrap();
+    let aurl_regex = get_aurl_regex();
 
-    match re.captures(&data.input_new_url) {
+    match aurl_regex.captures(&data.input_new_url) {
         Some(caps) => {
             // println!("ID: {}", caps.name("id").unwrap().as_str());
             data.service_id = caps.name("id").unwrap().as_str().to_string();
