@@ -77,9 +77,7 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_child(Label::new(|data: &AppState, _env: &_| "Password: ".to_string() + &data.service_password))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Authentication: ".to_string() + &data.service_authentication))
-        .with_spacer(8.0)
-        // Bordure en rouge
-        .border(Color::RED, 1.0);
+        .with_spacer(8.0);
 
 
     let right_service_table = Flex::column()
@@ -92,9 +90,7 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_child(Label::new(|data: &AppState, _env: &_| "Min: ".to_string() + &data.service_min))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Max: ".to_string() + &data.service_max))
-        .with_spacer(8.0)
-        // Bordure en bleu
-        .border(Color::BLUE, 1.0);
+        .with_spacer(8.0);
 
 
     // Créer une section qui va afficher les différents éléments d'un service
@@ -103,8 +99,6 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_flex_child(left_service_table, 1.0)
         .with_flex_spacer(1.0)
         .with_flex_child(right_service_table, 1.0)
-        // Bordure jaune
-        .border(Color::YELLOW, 1.0)
         .center();
 
     // Créer la section en haut à droite
