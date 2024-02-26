@@ -16,18 +16,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ProbeSnmpRunable implements Runnable, ProbeRunable {
 
     private BufferedReader in;
     private PrintWriter out;
-    private Probe probe;
+    private final Probe probe;
     private final Map<Aurl, String> aurlsStatus;
     private int frequency;
 
@@ -63,6 +58,15 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
                     frequency = Integer.parseInt(command.getFrequency());
                     probe.startThreadLoop(this::collectData, frequency);
                 }
+            } else if (Objects.equals(command.getCommandType(), "STATUSOF")) {
+                //TODO : a tester
+                String id = command.getId();
+                Aurl aurl = aurlsStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
+                if (aurl != null) {
+                    String message = MessageBuilder.buildStatus(id, aurlsStatus.get(aurl));
+                    out.print(message);
+                }
+
             }
         } catch (SocketTimeoutException e) {
             System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
@@ -73,22 +77,27 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
 
 
     private void collectData() {
+        boolean hasChanged = false;
         for (Aurl value : aurlsStatus.keySet()) {
             if (value.type().contains("snmp")) {
                 if (value.url().password() == null) {
-                    collectDataV2(value);
+                    hasChanged = collectDataV2(value);
                 } else {
                     try {
-                        collectDataV3(value);
+                        hasChanged=collectDataV3(value);
                     } catch (IOException e) {
                         System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
                     }
                 }
             }
         }
+        if (hasChanged) {
+            String message = MessageBuilder.buildData(probe.getConfigProbes().protocol(), probe.getConfigProbes().unicastPort());
+            probe.sendMulticastMessage(message);
+        }
     }
 
-    private void collectDataV3(Aurl aurl) throws IOException {
+    private boolean collectDataV3(Aurl aurl) throws IOException {
         String target = String.format("udp:%s/%d", aurl.url().host(), aurl.url().port());
         SnmpBuilder snmpBuilder = new SnmpBuilder();
         Snmp snmp = snmpBuilder.udp().securityProtocols(SecurityProtocols.SecurityProtocolSet.maxCompatibility).v3().usm().threads(2).build();
@@ -109,24 +118,22 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
             PDU pdu = targetBuilder.pdu().type(PDU.GET).oids(aurl.url().path().substring(1)).contextName("").build();
             ResponseEvent<?> responseEventSnmp = snmp.get(pdu, userTarget);
             if (responseEventSnmp.getResponse() != null) {
-                StringBuilder result = new StringBuilder();
-                List<VariableBinding> vbs = responseEventSnmp.getResponse().getAll();
-                for (VariableBinding vb : vbs) {
-                    result.append(vb.getVariable().toString());
-                }
                 snmp.close();
-                System.out.println("Réponse SNMP: " + result);
+                return handleResponse(responseEventSnmp, aurl);
             } else {
-                System.err.println("Aucune réponse de l'hôte SNMP.");
+                System.err.println("Timeout on engine ID discovery for " + targetAddress + ", GET not sent.");
+                snmp.close();
+                return false;
             }
         } else {
             System.err.println("Timeout on engine ID discovery for " + targetAddress + ", GET not sent.");
             snmp.close();
+            return false;
 
         }
     }
 
-    private void collectDataV2(Aurl aurl) {
+    private boolean collectDataV2(Aurl aurl) {
 
 
         try (TransportMapping<?> transport = new DefaultUdpTransportMapping()) {
@@ -137,32 +144,44 @@ public class ProbeSnmpRunable implements Runnable, ProbeRunable {
             target.setCommunity(new OctetString(aurl.url().user()));
             target.setAddress(targetAddress);
             target.setVersion(SnmpConstants.version2c);
-            sendRequest(snmp, target, aurl.url().path().substring(1));
+            return sendRequest(snmp, target, aurl.url().path().substring(1),aurl);
         } catch (IOException e) {
             System.out.println("Erreur lors de la collecte des données SNMP: " + e.getMessage());
+            return false;
         }
     }
 
-    private void sendRequest(Snmp snmp, CommunityTarget<Address> target, String oid) throws IOException {
+    private boolean sendRequest(Snmp snmp, CommunityTarget<Address> target, String oid, Aurl aurl) throws IOException {
         PDU pdu = new PDU(); // Utilisez PDU pour SNMPv1 et SNMPv2c
 
         pdu.add(new VariableBinding(new OID(oid)));
         pdu.setType(PDU.GET);
 
         ResponseEvent<Address> response = snmp.get(pdu, target);
-        handleResponse(response);
+        return handleResponse(response, aurl);
 
     }
 
 
-    private void handleResponse(ResponseEvent<?> response) {
+    private boolean handleResponse(ResponseEvent<?> response,Aurl aurl) {
+        String result = null;
         if (response != null && response.getResponse() != null) {
             for (VariableBinding vb : response.getResponse().getVariableBindings()) {
-                System.out.println("Réponse SNMP: " + vb);
+                //Si vb est infériéer a aurl.min alors on met le status a ALARM sinon OK
+                if (vb.getVariable().toInt() < aurl.min()) {
+                    result = "ALARM";
+                } else {
+                    result = "OK";
+                }
             }
         } else {
-            System.out.println("Aucune réponse de l'hôte SNMP.");
+            result = "DOWN";
         }
+        if (!Objects.equals(aurlsStatus.get(aurl), result)) {
+            aurlsStatus.put(aurl, result);
+            return true;
+        }
+        return false;
     }
 
 

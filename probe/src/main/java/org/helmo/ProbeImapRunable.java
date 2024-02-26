@@ -12,18 +12,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.net.http.HttpClient;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static org.helmo.ImapBuilder.*;
 
 public class ProbeImapRunable implements Runnable , ProbeRunable{
     private BufferedReader in;
     private PrintWriter out;
-    private Probe probe;
+    private final Probe probe;
     private final Map<Aurl, String> aurlsStatus;
     private int frequency;
 
@@ -59,6 +55,15 @@ public class ProbeImapRunable implements Runnable , ProbeRunable{
                     frequency = Integer.parseInt(command.getFrequency());
                     probe.startThreadLoop(this::collectData, frequency);
                 }
+            } else if (Objects.equals(command.getCommandType(), "STATUSOF")) {
+                //TODO : a tester
+                String id = command.getId();
+                Aurl aurl = aurlsStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
+                if (aurl != null) {
+                    String message = MessageBuilder.buildStatus(id, aurlsStatus.get(aurl));
+                    out.print(message);
+                }
+
             }
         } catch (SocketTimeoutException e) {
             System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
