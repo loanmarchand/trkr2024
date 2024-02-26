@@ -17,10 +17,30 @@ public class ClientMenu {
     }
 
     public static void ajouterSondeHTTPS() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Ajout d'une sonde HTTPS");
+
+        System.out.print("Veuillez saisir l'URL à superviser (ex: https://www.example.com) : ");
+        String url = scanner.nextLine();
+
+        System.out.print("Veuillez saisir l'intervalle de collecte des données (en secondes) : ");
+        int pollingInterval = scanner.nextInt();
+        scanner.nextLine(); // Pour consommer la nouvelle ligne restante après nextInt()
+
         //la logique pour créer une sonde HTTPS avec les informations saisies
     }
 
     public static void ajouterSondeSNMP() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Ajout d'une sonde SNMP");
+
+        System.out.print("Veuillez saisir l'adresse IP ou le nom d'hôte SNMP (ex: 192.168.1.1 ou mydevice.local) : ");
+        String ipAddress = scanner.nextLine();
+
+        System.out.print("Veuillez saisir le port SNMP (par défaut 161) : ");
+        int snmpPort = scanner.nextInt();
+        scanner.nextLine(); // Pour consommer la nouvelle ligne restante après nextInt()
+
         //la logique pour créer une sonde SNMP avec les informations saisies
     }
 
