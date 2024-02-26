@@ -1,4 +1,5 @@
 mod components;
+mod protocol;
 
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
@@ -7,6 +8,7 @@ use regex::Regex;
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
 use components::text::text_component;
+use protocol::protocol::Protocol; // dossier::fichier::struct
 
 // Constantes
 const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
@@ -197,7 +199,7 @@ fn insert_line_breaks(original: &str, max_length: usize) -> String {
 
 // Méthode qui sera applée quand on veut ajouter un nouveau service
 fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
+    // println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
 
     // On commence par remettre toutes les valeurs à "no_data"
     data.service_name = String::from("no_data");
@@ -218,63 +220,67 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
 
     match re.captures(&data.input_new_url) {
         Some(caps) => {
-            println!("ID: {}", caps.name("id").unwrap().as_str());
+            // println!("ID: {}", caps.name("id").unwrap().as_str());
             data.service_id = caps.name("id").unwrap().as_str().to_string();
 
-            println!("Protocol: {}", caps.name("protocol").unwrap().as_str());
+            // println!("Protocol: {}", caps.name("protocol").unwrap().as_str());
             data.service_protocol = caps.name("protocol").unwrap().as_str().to_string();
 
             if let Some(username) = caps.name("username") {
-                println!("Username: {}", username.as_str());
+                // println!("Username: {}", username.as_str());
                 data.service_username = username.as_str().to_string();
             } else {
-                println!("Username: no_data");
+                // println!("Username: no_data");
                 data.service_username = String::from("no_data");
             }
 
             if let Some(password) = caps.name("password") {
-                println!("Password: {}", password.as_str());
+                // println!("Password: {}", password.as_str());
                 data.service_password = password.as_str().to_string();
             } else {
-                println!("Password: no_data");
+                // println!("Password: no_data");
                 data.service_password = String::from("no_data");
             }
 
             if let Some(authentication) = caps.name("authentication") {
-                println!("Authentication: {}", authentication.as_str());
+                // println!("Authentication: {}", authentication.as_str());
                 data.service_authentication = authentication.as_str().to_string();
             } else {
-                println!("Authentication: no_data");
+                // println!("Authentication: no_data");
                 data.service_authentication = String::from("no_data");
             }
 
-            println!("Host: {}", caps.name("host").unwrap().as_str());
+            // println!("Host: {}", caps.name("host").unwrap().as_str());
             data.service_host = caps.name("host").unwrap().as_str().to_string();
 
             if let Some(port) = caps.name("port") {
-                println!("Port: {}", port.as_str());
+                // println!("Port: {}", port.as_str());
                 data.service_port = port.as_str().to_string();
             } else {
-                println!("Port: no_data");
+                // println!("Port: no_data");
                 data.service_port = String::from("no_data");
             }
 
             if let Some(path) = caps.name("path") {
-                println!("Path: {}", path.as_str());
+                // println!("Path: {}", path.as_str());
                 data.service_path = path.as_str().to_string();
             } else {
-                println!("Path: no_data");
+                // println!("Path: no_data");
                 data.service_path = String::from("no_data");
             }
 
-            println!("Min: {}", caps.name("min").unwrap().as_str());
+            // println!("Min: {}", caps.name("min").unwrap().as_str());
             data.service_min = caps.name("min").unwrap().as_str().to_string();
 
-            println!("Max: {}", caps.name("max").unwrap().as_str());
+            // println!("Max: {}", caps.name("max").unwrap().as_str());
             data.service_max = caps.name("max").unwrap().as_str().to_string();
 
             data.service_name = data.input_new_url.clone();
             data.service_validation_message = String::from(data.service_name.clone() + " est validé par la regex");
+
+            let newmon_request = Protocol::build_newmon(&data.input_new_url);
+
+            println!("Requete à envoyer au moniteur: {}", newmon_request);
         }
         None => {
             println!("L'URL n'est pas valide");
