@@ -1,13 +1,13 @@
 {
   "multicastAddress": "224.0.0.254",
   "multicastPort": 65001,
-  "multicastInterface": "enxf8e43bbeaf49",
+  "multicastInterface": "wlp0s20f3",
   "clientPort": 12345,
   "tls": false,
   "aesKey": "853QlfQasa2OJQlokSYPUZwzhH25sWmcvBkV1yD0Q1yDbf4uB/SHVVdGphA7V2nA4iE78EUikhj95iltTO98gKj3ueX/KxXRkkXtUL+Vk8Ep+xghJk4Ydtm+VDmkQfwVY/3OPLa4HjkGZOZ8Bge+Bg16tdpiUxTwYD+g62NgLpSODP1m/zcOVA8WJ9eUxL+gSrmCtnlpeEc6OQoI8rDOBHgBlfFSk0E+dE0iX2m/HDauUdG7Q4KAD16pH5Wfrgte4ZF449twZMZzm2Hg9JmVPuR0cuEw0qkeeclwN+ZDPN6aVy0s2uwG0RgpNn2rjCKNrNzMcALWckzpAp9plU8TcQ==",
   "protocolsDelay": {
     "snmp": 120,
-    "https": 10
+    "http": 10
   },
   "probes": {
     "http1": "http1!https://www.swilabus.com/!0!1500",

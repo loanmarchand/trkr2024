@@ -8,6 +8,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HttpClientProbeTask extends AbstractProbeTask {
     private final HttpClient client;
@@ -19,28 +21,41 @@ public class HttpClientProbeTask extends AbstractProbeTask {
 
 
     protected void collectData() {
+        List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+        AtomicBoolean changed = new AtomicBoolean(false);
+
         aurlsStatus.keySet().forEach(aurl -> {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(aurl.url().protocol() + "://" + aurl.url().host()))
+                    .uri(URI.create(aurl.url().protocol() + "://" + aurl.url().host()+aurl.url().path()))
                     .timeout(Duration.ofSeconds(5))
                     .GET()
                     .build();
 
             Instant start = Instant.now(); // Marquer le début de la requête
 
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            CompletableFuture<Boolean> future = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .thenApplyAsync(response -> setStatut(aurl, response, start))
                     .exceptionally(e -> {
                         System.err.println("Erreur lors de la collecte des données pour l'URL " + aurl.url().host() + " : " + e.getMessage());
                         return false; // En cas d'exception, considérer qu'aucune modification n'a été effectuée
                     })
-                    .thenAccept(isChanged -> {
-                        if (isChanged) {
-                            String message = MessageBuilder.buildData(probe.getConfigProbes().protocol(), probe.getConfigProbes().unicastPort());
-                            probe.sendMulticastMessage(message);
+                    .thenApply(modified -> {
+                        if (modified) {
+                            changed.set(true);
                         }
+                        return modified;
                     });
+            futures.add(future);
         });
+
+        // Attendre la fin de tous les CompletableFuture
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // Maintenant, vérifiez la valeur de changed
+        if (changed.get()) {
+            String message = MessageBuilder.buildData(probe.getConfigProbes().protocol(), probe.getConfigProbes().unicastPort());
+            probe.sendMulticastMessage(message);
+        }
     }
 
     private Boolean setStatut(Aurl aurl, HttpResponse<String> response, Instant start) {
@@ -55,12 +70,12 @@ public class HttpClientProbeTask extends AbstractProbeTask {
             status = "DOWN";
         }
 
-        synchronized (this) {
-            if (!Objects.equals(aurlsStatus.get(aurl), status)) {
-                aurlsStatus.put(aurl, status);
-                return true;
-            }
+
+        if (!Objects.equals(aurlsStatus.get(aurl), status)) {
+            aurlsStatus.put(aurl, status);
+            return true;
         }
+
         return false;
     }
 

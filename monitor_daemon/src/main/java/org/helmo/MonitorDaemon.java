@@ -75,7 +75,7 @@ public class MonitorDaemon {
         // Example of sending AURLs to the probe
         try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort()));
              PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
-            String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()+'s'), aurls);
+            String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()), aurls);
             System.out.println("Sending AURLs to probe: " + message);
             message = aesEncryption.encrypt(message, configMonitor.aesKey());
             out.print(message);

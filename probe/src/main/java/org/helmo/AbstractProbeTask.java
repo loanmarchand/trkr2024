@@ -42,10 +42,7 @@ public abstract class AbstractProbeTask implements Runnable {
                 System.out.println("La configuration reçue est invalide.");
             } else if (Objects.equals(command.getCommandType(), "SETUP")) {
                 System.out.println("La configuration reçue est valide.");
-                List<Aurl> aurls = new ArrayList<>();
-                //TODO : attendre que le builder soit fait pour mettre les vrais valeurs
-                command.getAurlList().forEach(aurl -> aurls.add(new Aurl("test", new Url("", "", "", "", 0, ""), 0, 0)));
-                //TODO:  mettre les vrais valleurs vérifier que le type de aurl est égal a HTTPS
+                List<Aurl> aurls = new ArrayList<>(command.getAurlList());
                 aurls.forEach(aurl -> aurlsStatus.putIfAbsent(aurl, "UNKNOWN"));
                 if (frequency == 0) {
                     frequency = Integer.parseInt(command.getFrequency());
