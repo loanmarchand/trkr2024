@@ -14,10 +14,12 @@ public abstract class AbstractProbeTask implements Runnable {
     protected final Probe probe;
     protected final Map<Aurl, String> aurlsStatus;
     protected int frequency;
+    protected AesEncryption aesEncryption;
 
     public AbstractProbeTask(Socket socket, Probe probe) {
         this.probe = probe;
         this.aurlsStatus = new HashMap<>();
+        this.aesEncryption = new AesEncryption();
         this.frequency = 0;
         try {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -33,6 +35,7 @@ public abstract class AbstractProbeTask implements Runnable {
             System.out.println("En attente de la configuration...");
             String configLine;
             configLine = in.readLine();
+            configLine = aesEncryption.decrypt(configLine,probe.getConfigProbes().aesKey());
             System.out.println("Configuration reçue: " + configLine);
             Command command = MessageAnalyzer.analyzeMessage(configLine);
             if (command == null || Objects.equals(command.getCommandType(), "NONE")) {
@@ -54,6 +57,7 @@ public abstract class AbstractProbeTask implements Runnable {
                 Aurl aurl = aurlsStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
                 if (aurl != null) {
                     String message = MessageBuilder.buildStatus(id, aurlsStatus.get(aurl));
+                    message = aesEncryption.encrypt(message,probe.getConfigProbes().aesKey());
                     out.print(message);
                 }
 
@@ -63,6 +67,8 @@ public abstract class AbstractProbeTask implements Runnable {
             System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
         } catch (IOException e) {
             System.out.println("Erreur lors de la lecture de la configuration: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -113,7 +113,7 @@ public class Probe {
                     break;
                 case "imap":
                     if (abstractProbeTask == null) {
-                        abstractProbeTask = new AbstractProbeImapTask(socket, this);
+                        abstractProbeTask = new ImapClientProbetask(socket, this);
                         new Thread(abstractProbeTask).start();
                     }
                     else {

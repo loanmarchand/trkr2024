@@ -10,9 +10,11 @@ import java.util.List;
 public class MonitorDaemon {
     private final ConfigMonitor configMonitor;
     private MulticastSocket socket;
+    private final AesEncryption aesEncryption;
 
     public MonitorDaemon(ConfigMonitor configMonitor) {
         this.configMonitor = configMonitor;
+        this.aesEncryption = new AesEncryption();
     }
 
     public void start() {
@@ -75,9 +77,12 @@ public class MonitorDaemon {
              PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
             String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()+'s'), aurls);
             System.out.println("Sending AURLs to probe: " + message);
+            message = aesEncryption.encrypt(message, configMonitor.aesKey());
             out.print(message);
         } catch (IOException e) {
             System.out.println("Error sending AURLs to probe: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -23,6 +23,7 @@ dependencies {
     implementation project(':json')
     implementation project(':protocol')
     implementation project(':domains')
+    implementation project(':chiffrement')
 }
 
 test {

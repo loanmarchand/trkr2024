@@ -81,4 +81,17 @@ public class AesEncryption {
         SecretKey tmp = factory.generateSecret(spec);
         return new SecretKeySpec(tmp.getEncoded(), "AES");
     }
+
+    private String generateAesKey() {
+        SecureRandom random = new SecureRandom();
+        byte[] key = new byte[256];
+        random.nextBytes(key);
+        return Base64.getEncoder().encodeToString(key);
+    }
+
+    public static void main(String[] args) {
+        AesEncryption aes = new AesEncryption();
+        String key = aes.generateAesKey();
+        System.out.println(key);
+    }
 }
