@@ -1,5 +1,5 @@
 {
-  "protocol": "snmp",
+  "protocol": "imap",
   "multicastAddress": "224.0.0.254",
   "multicastPort": 65001,
   "multicastInterface": "wlp0s20f3",

@@ -14,7 +14,7 @@ public class ProbeRunner {
         String probeType = args[0].toLowerCase();
         JsonHelper jsonHelper = new JsonHelper();
         switch (probeType) {
-            case "https":
+            case "http":
                 runHttpsProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_HTTPS));
                 break;
             case "snmp":
