@@ -1,11 +1,20 @@
 package org.helmo;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.*;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
+
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import java.net.Socket;
+
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+
 
 public class MonitorDaemon {
     private final ConfigMonitor configMonitor;
@@ -79,6 +88,59 @@ public class MonitorDaemon {
         } catch (IOException e) {
             System.out.println("Error sending AURLs to probe: " + e.getMessage());
         }
+    }
+
+    private void TLS(){
+        // Chargement du fichier de certificat du serveur
+        System.setProperty("javax.net.ssl.keyStore", "../../../ressources/star.labo24.swilabus.com.p12");
+        System.setProperty("javax.net.ssl.keyStorePassword", "labo24");
+
+        // Chemin vers les fichiers .crt
+        String cheminCertificat1 = "../../../ressources/SwilabusIntermediateG21.crt";
+        String cheminCertificat2 = "../../../ressources/SwilabusMainCertificateG1.crt";
+
+        try {
+            // Conversion des fichiers .crt en un truststore temporaire
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null); // Initialisation du truststore
+
+            // Charger le premier certificat
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            InputStream certStream1 = new FileInputStream(cheminCertificat1);
+            Certificate cert1 = cf.generateCertificate(certStream1);
+            trustStore.setCertificateEntry("cert1", cert1);
+
+            // Charger le deuxième certificat
+            InputStream certStream2 = new FileInputStream(cheminCertificat2);
+            Certificate cert2 = cf.generateCertificate(certStream2);
+            trustStore.setCertificateEntry("cert2", cert2);
+
+            // Enregistrer le truststore temporaire sur le disque
+            String cheminTruststore = "./../../ressources/truststore";
+            trustStore.store(new FileOutputStream(cheminTruststore), "labo24".toCharArray());
+
+            // Configurer Java pour utiliser le truststore nouvellement créé
+            System.setProperty("javax.net.ssl.trustStore", cheminTruststore);
+            System.setProperty("javax.net.ssl.trustStorePassword", "labo24");
+
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // Configuration des protocoles et des suites de chiffrement
+        System.setProperty("https.protocols", "TLSv1.3");
+        System.setProperty("https.cipherSuites", "TLS_AES_128_GCM_SHA256");
+
+        // Utilisation des sockets sécurisés
+        try {
+            SSLServerSocketFactory sslServerSocketFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(0000);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // Acceptation des connexions entrantes et gestion des communications sécurisées
+
     }
 
     public static void main(String[] args) {
