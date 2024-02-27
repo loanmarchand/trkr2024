@@ -26,7 +26,7 @@ public class Protocole {
     private static final String min = digit + "{1,8}";
     private static final String max = digit + "{1,8}";
     private static final String frequency = digit + "{1,8}";
-    private static final String augmented_url ="(" + id + ")!" + url + "!(" + min + ")!(" + max + ")";
+    private static final String augmented_url ="(" + id + ")!(" + url + ")!(" + min + ")!(" + max + ")";
     private static final String state = "(?:OK|ALARM|DOWN|UNKNOWN)";
     private static final String message = character + "{1,200}";
 
@@ -191,7 +191,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "SETUP 10 http1!https://www.swilabus.com/!0!1500 http2!https://www.swilabus.be/!0!2000 http3!https://www.swilabus.com/trkr1!0!1700 http4!https://www.swilabus.com/trkr2!0!1800\r\n";
-        System.out.println(url);
+        System.out.println(augmented_url);
         if (Pattern.matches(setup, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
         } else {

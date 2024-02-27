@@ -4,9 +4,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RegexAnalyzer {
-    public static Aurl analyzeAurl(){
-
-
+    public static Aurl analyzeAurl(String aurl){
+        if(Pattern.matches(Protocole.getAurl(),aurl)){
+            Pattern pattern = Pattern.compile(Protocole.getAurl());
+            Matcher matcher = pattern.matcher(aurl);
+            if (matcher.find()) {
+                return new Aurl(matcher.group(1),analyzeUrl(matcher.group(3)), Integer.parseInt(matcher.group(20)), Integer.parseInt(matcher.group(21)));
+            }else{
+                return null;
+            }
+        }
         return null;
     }
 
