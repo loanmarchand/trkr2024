@@ -22,7 +22,7 @@ public class Protocole {
     private static final String password_auth = password + "(?:#" + authentication + ")?";
     private static final String host = "(" + letter_digit + "|\\.|_|-)" + "{3,50}";
     private static final String path = "/(?:" + letter_digit + "|\\.|_|-|/){0,100}";
-    private static final String url = "((" + protocol + ")://(?:(" + username + ")(?::(" + password_auth + "))?@)?(" + host + ")(?::(" + port + "))?(" + path + "))";
+    private static final String url = "(?<protocole>" + protocol + ")://(?:(?<username>(" + username + "))(?::(?<password>" + password_auth + "))?@)?(?<host>" + host + ")(?::(?<port>" + port + "))?(?<path>" + path + ")";
     private static final String min = digit + "{1,8}";
     private static final String max = digit + "{1,8}";
     private static final String frequency = digit + "{1,8}";
@@ -41,7 +41,7 @@ public class Protocole {
 
 
 //PROBE <--> MONITOR DEAMON
-    private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"((" + sp + augmented_url+ ")){0,100}" + crlf;
+    private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"(" + sp + augmented_url+ "){0,100}" + crlf;
     private static final String statusof = "STATUSOF" + sp +"(" + id + ")" + crlf;
     private static final String status = "STATUS" + sp + "(" + id + ")" + sp + "(" + state + ")" + crlf;
 
@@ -78,6 +78,14 @@ public class Protocole {
 //MULTICAST builders
     private static final String PROBE_BUILD = "PROBE <protocol> <port>\r\n";
     private static final String DATA_BUILD = "DATA <protocol> <port>\r\n";
+
+
+    public static String getAurl(){
+        return augmented_url;
+    }
+    public static String getUrl(){
+        return url;
+    }
 
 
 
@@ -183,7 +191,7 @@ public class Protocole {
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
         String sampleText = "SETUP 10 http1!https://www.swilabus.com/!0!1500 http2!https://www.swilabus.be/!0!2000 http3!https://www.swilabus.com/trkr1!0!1700 http4!https://www.swilabus.com/trkr2!0!1800\r\n";
-        System.out.println(data);
+        System.out.println(url);
         if (Pattern.matches(setup, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
         } else {
