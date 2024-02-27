@@ -58,9 +58,13 @@ public class Protocole {
     private static final String URLWUPP_BUILD = "<protocole>://<username>:<password>@<host>:<port><path>";
     private static final String URL_BUILD = "<protocole>://<host><path>";
     private static final String URLP_BUILD = "<protocole>://<host>:<port><path>";
+    private static final String URLWUPO_BUILD = "<protocole>://<username>@<host>:<port><path>";
+    private static final String URLWU_BUILD = "<protocole>://<username>@<host><path>";
 
 
-//CLIENT <--> MONITOR DEAMON builders
+
+
+    //CLIENT <--> MONITOR DEAMON builders
     private static final String NEWMON_BUILD = "NEWMON <aurl>\r\n";
     private static final String NEWMONRESP_BUILD = "<+OK|-ERR> <message?>\r\n";
     private static final String LISTMON_BUILD = "LISTMON\r\n";
@@ -144,6 +148,12 @@ public class Protocole {
     }
     public static String getUrlpBuild(){
         return URLP_BUILD;
+    }
+    public static String getUrlwuBuild(){
+        return URLWU_BUILD;
+    }
+    public static String getUrlwupoBuild(){
+        return URLWUPO_BUILD;
     }
 
 
