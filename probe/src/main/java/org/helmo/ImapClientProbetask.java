@@ -6,7 +6,6 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 
-import java.io.*;
 import java.net.Socket;
 import java.util.List;
 
@@ -55,7 +54,7 @@ public class ImapClientProbetask extends AbstractProbeTask {
             }
 
         } catch (Exception e) {
-            System.err.println(e);
+            System.err.println(e.getMessage());
             if (!status.equals("DOWN")) {
                 System.out.println("DOWN");
                 aurlsStatus.put(probe, "DOWN");
@@ -63,18 +62,5 @@ public class ImapClientProbetask extends AbstractProbeTask {
             }
         }
         return false;
-    }
-
-
-    @Override
-    public void updateProbe(Socket socket) {
-        try {
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out  = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-            run();
-        } catch (Exception e) {
-            System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
-        }
     }
 }

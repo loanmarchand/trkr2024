@@ -10,13 +10,13 @@ public class MonitorDaemon {
     private final ConfigMonitor configMonitor;
     private MulticastSocket multicastSocket;
     private final AesEncryption aesEncryption;
-    private final Map<Aurl,String> aurlStatus;
+    private final Map<Aurl, String> aurlStatus;
 
     public MonitorDaemon(ConfigMonitor configMonitor) {
         this.configMonitor = configMonitor;
         this.aesEncryption = new AesEncryption();
         this.aurlStatus = new HashMap<>();
-        configMonitor.probes().forEach(aurl -> aurlStatus.put(aurl,"UNKNOWN"));
+        configMonitor.probes().forEach(aurl -> aurlStatus.put(aurl, "UNKNOWN"));
     }
 
     public void start() {
@@ -27,6 +27,7 @@ public class MonitorDaemon {
             NetworkInterface networkInterface = NetworkInterface.getByName(configMonitor.multicastInterface());
             this.multicastSocket.joinGroup(new InetSocketAddress(group, configMonitor.multicastPort()), networkInterface);
             listenForMulticast();
+
         } catch (IOException e) {
             System.out.println("IOException in start: " + e.getMessage());
         }
@@ -42,7 +43,7 @@ public class MonitorDaemon {
                     String message = new String(packet.getData(), 0, packet.getLength());
                     InetAddress probeAddress = packet.getAddress();
                     System.out.println("Received multicast message: " + message);
-                    processMultiCastMessage(message, probeAddress);
+                    handleProbeMessage(message, probeAddress);
                 } catch (IOException e) {
                     System.out.println("IOException in listenForMulticast: " + e.getMessage());
                     break;
@@ -51,23 +52,29 @@ public class MonitorDaemon {
         }).start();
     }
 
-    private void processMultiCastMessage(String message, InetAddress probeAddress) {
+    private void handleProbeMessage(String message, InetAddress probeAddress) {
         Command command = MessageAnalyzer.analyzeMessage(message);
         if (command != null) {
             System.out.println("Commande reconnue: " + command.getCommandType());
             switch (command.getCommandType()) {
                 case "PROBE":
-                    List<Aurl> aurls = configMonitor.probes().stream()
-                            .filter(aurl -> aurl.type().contains(command.getProtocole()))
-                            .toList();
+                    List<Aurl> aurls = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
                     sendAurlsToProbes(aurls, command, probeAddress);
                     break;
                 case "DATA":
-                    List<Aurl> aurlsStatus = configMonitor.probes().stream()
-                            .filter(aurl -> aurl.type().contains(command.getProtocole()))
-                            .toList();
-                    aurlsStatus.forEach(aurl -> sendStatusOfAurl(aurl,command, probeAddress));
+                    List<Aurl> aurlsStatus = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
+                    aurlsStatus.forEach(aurl -> sendStatusOfAurl(aurl, command, probeAddress));
                     break;
+                case "STATUS":
+                    String id = command.getId();
+                    String state = command.getState();
+                    Aurl aurl = aurlStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
+                    if (aurl != null) {
+                        aurlStatus.put(aurl, state);
+                        System.out.println("Status of URL " + aurl.url().host() + " updated to " + state);
+                    }
+                    break;
+
                 default:
                     System.out.println("Commande non reconnue");
                     break;
@@ -75,41 +82,39 @@ public class MonitorDaemon {
         }
     }
 
+
     private void sendStatusOfAurl(Aurl aurl, Command command, InetAddress probeAddress) {
-        // Example of sending the status of an AURL to the probe
-        try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort()));
-             PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
+        try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort()))) {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             String message = MessageBuilder.buildStatusof(aurl.type());
-            System.out.println("Sending status of AURL to probe: " + message);
             message = aesEncryption.encrypt(message, configMonitor.aesKey());
-            out.print(message);
+            out.println(message);
+            out.flush();
+
+            System.out.println("STATUSOF sent to probe: " + message);
+
+            // Attente de la réponse STATUS
+            String encryptedResponse = in.readLine();
+            if (encryptedResponse != null) {
+                String response = aesEncryption.decrypt(encryptedResponse, configMonitor.aesKey());
+                handleProbeMessage(response, probeAddress);
+            } else {
+                System.out.println("No response received from probe");
+            }
         } catch (IOException e) {
-            System.out.println("Error sending status of AURL to probe: " + e.getMessage());
+            System.out.println("Error communicating with probe at address " + probeAddress.getHostAddress() + ": " + e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void handleStatusOfResponse(Aurl aurl, Socket socket) {
-        try {
-            String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
-            response = aesEncryption.decrypt(response, configMonitor.aesKey());
-            Command command = MessageAnalyzer.analyzeMessage(response);
-            if (command != null && command.getCommandType().equals("STATUS")) {
-                aurlStatus.put(aurl, command.getState());
-            }
-        } catch (IOException e) {
-            System.out.println("Error handling status of AURL response: " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("Error handling status of AURL response: " + e.getMessage());
-        }
-    }
 
     private void sendAurlsToProbes(List<Aurl> aurls, Command command, InetAddress probeAddress) {
         System.out.println(command);
         // Example of sending AURLs to the probe
-        try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort()));
-             PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
+        try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort())); PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
             String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()), aurls);
             System.out.println("Sending AURLs to probe: " + message);
             message = aesEncryption.encrypt(message, configMonitor.aesKey());

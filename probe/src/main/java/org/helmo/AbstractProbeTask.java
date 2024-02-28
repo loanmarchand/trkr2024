@@ -7,7 +7,7 @@ import java.util.*;
 
 public abstract class AbstractProbeTask implements Runnable {
     protected BufferedReader in;
-    protected BufferedWriter out;
+    protected PrintWriter out;
     protected final Probe probe;
     protected final Map<Aurl, String> aurlsStatus;
     protected int frequency;
@@ -20,7 +20,7 @@ public abstract class AbstractProbeTask implements Runnable {
         this.frequency = 0;
         try {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
         } catch (IOException e) {
             System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
@@ -52,12 +52,12 @@ public abstract class AbstractProbeTask implements Runnable {
                 if (aurl != null) {
                     String message = MessageBuilder.buildStatus(id, aurlsStatus.get(aurl));
                     message = aesEncryption.encrypt(message,probe.getConfigProbes().aesKey());
-                    out.write(message);
+                    out.println(message); // Ajoutez un retour à la ligne à la fin
                     out.flush();
-                    System.out.println("Statut de l'URL " + aurl.url().host() + " envoyé.");
+                    System.out.println("STATUS of URL " + aurl.url().host() + " sent.");
                 }
-
             }
+
 
         } catch (SocketTimeoutException e) {
             System.err.println("Aucune configuration reçue dans l'intervalle actuel.");
@@ -73,7 +73,7 @@ public abstract class AbstractProbeTask implements Runnable {
     public void updateProbe(Socket socket) {
         try {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
             run();
         } catch (IOException e) {
             System.out.println("Erreur lors de la mise à jour du BufferedReader et du PrintWriter: " + e.getMessage());
