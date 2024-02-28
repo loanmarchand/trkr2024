@@ -5,17 +5,22 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 public class MonitorDaemon {
     private final ConfigMonitor configMonitor;
     private MulticastSocket multicastSocket;
     private final AesEncryption aesEncryption;
     private final Map<Aurl, String> aurlStatus;
+    private final BlockingQueue<Runnable> worker;
+    private final ExecutorService executor;
 
     public MonitorDaemon(ConfigMonitor configMonitor) {
         this.configMonitor = configMonitor;
         this.aesEncryption = new AesEncryption();
         this.aurlStatus = new HashMap<>();
+        this.worker = new LinkedBlockingQueue<>();
+        this.executor = new ThreadPoolExecutor(10,50,60, TimeUnit.SECONDS,worker);
         configMonitor.probes().forEach(aurl -> aurlStatus.put(aurl, "UNKNOWN"));
     }
 
@@ -53,33 +58,40 @@ public class MonitorDaemon {
     }
 
     private void handleProbeMessage(String message, InetAddress probeAddress) {
-        Command command = MessageAnalyzer.analyzeMessage(message);
-        if (command != null) {
-            System.out.println("Commande reconnue: " + command.getCommandType());
-            switch (command.getCommandType()) {
-                case "PROBE":
-                    List<Aurl> aurls = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
-                    sendAurlsToProbes(aurls, command, probeAddress);
-                    break;
-                case "DATA":
-                    List<Aurl> aurlsStatus = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
-                    aurlsStatus.forEach(aurl -> sendStatusOfAurl(aurl, command, probeAddress));
-                    break;
-                case "STATUS":
-                    String id = command.getId();
-                    String state = command.getState();
-                    Aurl aurl = aurlStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
-                    if (aurl != null) {
-                        aurlStatus.put(aurl, state);
-                        System.out.println("Status of URL " + aurl.url().host() + " updated to " + state);
-                    }
-                    break;
+        executor.submit(()->{
+            Command command = MessageAnalyzer.analyzeMessage(message);
+            if (command != null) {
+                System.out.println("Commande reconnue: " + command.getCommandType());
+                switch (command.getCommandType()) {
+                    case "PROBE":
+                        List<Aurl> aurls = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
+                        sendAurlsToProbes(aurls, command, probeAddress);
+                        break;
+                    case "DATA":
+                        List<Aurl> aurlsStatus = configMonitor.probes().stream()
+                                .filter(aurl -> aurl.type().contains(command.getProtocole()))
+                                .toList();
+                        aurlsStatus.forEach(aurl -> this.worker.offer(() -> sendStatusOfAurl(aurl, command, probeAddress)));
+                        break;
+                    case "STATUS":
+                        updateAurlStatus(command);
+                        break;
 
-                default:
-                    System.out.println("Commande non reconnue");
-                    break;
+                    default:
+                        System.out.println("Commande non reconnue");
+                        break;
+                }
             }
-        }
+        });
+
+    }
+
+    private void updateAurlStatus(Command command) {
+        String id = command.getId();
+        String state = command.getState();
+        aurlStatus.keySet().stream()
+                .filter(a -> a.type().equals(id))
+                .findFirst().ifPresent(aurl -> aurlStatus.put(aurl, state));
     }
 
 
