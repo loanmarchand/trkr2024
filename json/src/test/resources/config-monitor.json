@@ -1,20 +1,23 @@
 {
-  "multicastAddress": "224.0.0.254",
-  "multicastPort": 65001,
-  "multicastInterface": "monInterfaceReseau_12345",
-  "clientPort": 12345,
-  "tls": false,
-  "aesKey": "BacDjYczQ/iZsyPtfOIh9yalb7So8W5td8fsHQFZKSXTFBUVSH6dpoAVyD5axV2Lut1jTxrCVS4EwdJ8RtePis5wFr4q1D2KGak5xXdI3qfkI9xJsUTeXC+iIUbk8dv219sThMO8WPscuKzD4E+7qbmSreQQZkGVHI9oWW6cZXinQKQUI7TbkzgXGVLKr6tMlk1gwtzEg/UCqOVS3p2XfoAMdpFU2PlpFLWcAe/BeoQz7Jv48f18ytH0Nlk4ULu7wpGCD+Eg5BUvE66F7ZaiVouMtRIy6HSyRIvKJWiCnmXe34Gw5v/28vZvQnLSs5MBORhCD8a4ktsY/yq0Y8HTP11BCyjXiklpMuqb2riFARA=",
-  "protocolsDelay": {
-    "snmp": 120,
-    "https": 10
+  "multicastAddress" : "224.0.0.254",
+  "multicastPort" : 65001,
+  "multicastInterface" : "enxf8e43bbeaf49",
+  "clientPort" : 12345,
+  "tls" : false,
+  "aesKey" : "853QlfQasa2OJQlokSYPUZwzhH25sWmcvBkV1yD0Q1yDbf4uB/SHVVdGphA7V2nA4iE78EUikhj95iltTO98gKj3ueX/KxXRkkXtUL+Vk8Ep+xghJk4Ydtm+VDmkQfwVY/3OPLa4HjkGZOZ8Bge+Bg16tdpiUxTwYD+g62NgLpSODP1m/zcOVA8WJ9eUxL+gSrmCtnlpeEc6OQoI8rDOBHgBlfFSk0E+dE0iX2m/HDauUdG7Q4KAD16pH5Wfrgte4ZF449twZMZzm2Hg9JmVPuR0cuEw0qkeeclwN+ZDPN6aVy0s2uwG0RgpNn2rjCKNrNzMcALWckzpAp9plU8TcQ==",
+  "protocolsDelay" : {
+    "snmp" : 120,
+    "https" : 10
   },
-  "probes": {
-    "http1": "http1!https://www.swilabus.com/!0!1500",
-    "http2": "http2!https://www.swilabus.be/!0!2000",
-    "http3": "http3!https://www.swilabus.com/trkr1!0!1700",
-    "http4": "http4!https://www.swilabus.com/trkr2!0!1800",
-    "snmp1": "snmp1!snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0!10000!99999999",
-    "snmp2": "snmp2!snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0!10!99999999"
+  "probes" : {
+    "http1" : "http1!https://www.swilabus.com/!0!1500",
+    "http2" : "http2!https://www.swilabus.be/!0!2000",
+    "http3" : "http3!https://www.swilabus.com/trkr1!0!1700",
+    "http4" : "http4!https://www.swilabus.com/trkr2!0!1800",
+    "snmp1" : "snmp1!snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0!10000!99999999",
+    "snmp2" : "snmp2!snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0!10!99999999",
+    "imap1" : "imap1!imap://trkr@eyJpbnN0YWxsZWQiOnsiY2xpZW50X2lkIjoiMjc3NzU1OTIxMTc4LXA2M3M0bnQ0MmExaWkzN3BrMjgwb2Zodm9qaXM3MW4wLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwicHJvamVjdF9pZCI6InRya3IyMDI0IiwiYXV0aF91cmkiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsInRva2VuX3VyaSI6Imh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjoiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwiY2xpZW50X3NlY3JldCI6IkdPQ1NQWC10VHU0eFhDcnBZTUl2R1IwMzdfQk43OVU0UlFvIiwicmVkaXJlY3RfdXJpcyI6WyJodHRwOi8vbG9jYWxob3N0Il19fQ==/!0!10",
+    "imap2" : "imap2!imap://loan@eyJpbnN0YWxsZWQiOnsiY2xpZW50X2lkIjoiMjc3NzU1OTIxMTc4LXA2M3M0bnQ0MmExaWkzN3BrMjgwb2Zodm9qaXM3MW4wLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwicHJvamVjdF9pZCI6InRya3IyMDI0IiwiYXV0aF91cmkiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsInRva2VuX3VyaSI6Imh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjoiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwiY2xpZW50X3NlY3JldCI6IkdPQ1NQWC10VHU0eFhDcnBZTUl2R1IwMzdfQk43OVU0UlFvIiwicmVkaXJlY3RfdXJpcyI6WyJodHRwOi8vbG9jYWxob3N0Il19fQ==/!0!10",
+    "https5" : "http5!https://www.example.com/!0!2500"
   }
 }
