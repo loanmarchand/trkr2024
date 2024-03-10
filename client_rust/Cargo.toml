@@ -12,8 +12,8 @@ regex = "1.10.3"
 lazy_static = "1.4.0"
 
 tokio = { version = "1", features = ["full"] }
-rustls = "0.20" # Vérifiez la dernière version compatible avec tokio-rustls si nécessaire
+rustls = "0.20"
 tokio-rustls = "0.23.1"
 webpki = "0.22"
-webpki-roots = "0.22" # Assurez-vous que cette version est compatible avec votre version de webpki
-rustls-pemfile = "0.2" # Assurez-vous de la compatibilité avec rustls
+webpki-roots = "0.22"
+rustls-pemfile = "0.2"

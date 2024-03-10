@@ -5,7 +5,7 @@ use rustls::{ServerConfig, ClientConfig, Certificate, PrivateKey, ServerName};
 use std::sync::Arc;
 use std::fs::File;
 use std::io::BufReader;
-use rustls_pemfile::{certs, rsa_private_keys};
+use rustls_pemfile::certs;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,19 +19,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn server() -> Result<(), Box<dyn std::error::Error>> {
     let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
     let key_file = File::open("src/ressource/star.labo24.swilabus.com.key")?;
-    let cert_reader = &mut BufReader::new(cert_file);
-    let key_reader = &mut BufReader::new(key_file);
+    let mut cert_reader = BufReader::new(cert_file);
+    let mut key_reader = BufReader::new(key_file);
 
-    let cert_chain = certs(cert_reader)
+    let certs = certs(&mut cert_reader)
         .expect("Failed to read certificate chain")
         .iter()
         .map(|cert| Certificate(cert.clone()))
-        .collect();
+        .collect::<Vec<Certificate>>();
 
-    let mut keys = rsa_private_keys(key_reader)
+    // Charger la clé privée au format PKCS#8
+    let keys = rustls_pemfile::pkcs8_private_keys(&mut key_reader)
         .expect("Failed to read private keys")
-        .drain(..)
-        .map(|key| PrivateKey(key))
+        .iter()
+        .map(|key| PrivateKey(key.clone()))
         .collect::<Vec<PrivateKey>>();
 
     if keys.is_empty() {
@@ -41,7 +42,7 @@ async fn server() -> Result<(), Box<dyn std::error::Error>> {
     let config = ServerConfig::builder()
         .with_safe_defaults()
         .with_no_client_auth()
-        .with_single_cert(cert_chain, keys.remove(0))?;
+        .with_single_cert(certs, keys[0].clone())?;
 
     let acceptor = TlsAcceptor::from(Arc::new(config));
 
