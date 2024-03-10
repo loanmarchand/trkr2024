@@ -1,61 +1,89 @@
-use std::error::Error;
-use std::net::TcpStream;
-use tokio::net::TcpListener;
-use tokio::io::AsyncReadExt;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+use tokio_rustls::{TlsAcceptor, TlsConnector};
+use rustls::{ServerConfig, ClientConfig, Certificate, PrivateKey, ServerName};
+use std::sync::Arc;
+use std::fs::File;
+use std::io::BufReader;
+use rustls_pemfile::{certs, rsa_private_keys};
 
-// Serveur
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Bind le serveur à l'adresse IP et au port spécifié
-    let listener = TcpListener::bind("192.168.1.26:7878").await?;
+    // Mettre en commentaire en fonction de ce que l'on veut tester
+    server().await?;
+    // client().await?;
 
-    println!("Serveur en écoute sur 192.168.1.26:7878");
+    Ok(())
+}
+
+async fn server() -> Result<(), Box<dyn std::error::Error>> {
+    let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
+    let key_file = File::open("src/ressource/star.labo24.swilabus.com.key")?;
+    let cert_reader = &mut BufReader::new(cert_file);
+    let key_reader = &mut BufReader::new(key_file);
+
+    let cert_chain = certs(cert_reader)
+        .expect("Failed to read certificate chain")
+        .iter()
+        .map(|cert| Certificate(cert.clone()))
+        .collect();
+
+    let mut keys = rsa_private_keys(key_reader)
+        .expect("Failed to read private keys")
+        .drain(..)
+        .map(|key| PrivateKey(key))
+        .collect::<Vec<PrivateKey>>();
+
+    if keys.is_empty() {
+        return Err("No private keys found".into());
+    }
+
+    let config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth()
+        .with_single_cert(cert_chain, keys.remove(0))?;
+
+    let acceptor = TlsAcceptor::from(Arc::new(config));
+
+    let listener = TcpListener::bind("192.168.1.26:7878").await?;
+    println!("Server listening on 192.168.1.26:7878");
 
     loop {
-        // Accepter une connexion
-        let (mut socket, addr) = listener.accept().await?;
+        let (stream, _addr) = listener.accept().await?;
+        let acceptor = acceptor.clone();
 
-        println!("Connexion établie avec {}", addr);
-
-        // Utilisation d'une tâche asynchrone pour gérer la connexion
         tokio::spawn(async move {
+            let stream = acceptor.accept(stream).await.expect("Failed to accept TLS connection");
+            let (mut reader, _) = tokio::io::split(stream);
             let mut buf = [0; 1024];
 
-            // Boucle pour lire les données envoyées par le client
-            loop {
-                match socket.read(&mut buf).await {
-                    Ok(0) => {
-                        println!("Connexion terminée avec {}", addr);
-                        return;
-                    }
-                    Ok(n) => {
-                        // Afficher le message reçu dans la console du serveur
-                        if let Ok(msg) = std::str::from_utf8(&buf[..n]) {
-                            println!("Message de {}: {}", addr, msg);
-                        }
-                    }
-                    Err(e) => {
-                        println!("Erreur lors de la lecture depuis la connexion : {}", e);
-                        return;
-                    }
-                }
+            match reader.read(&mut buf).await {
+                Ok(0) => {}, // Connection was closed
+                Ok(_) => {
+                    println!("Received: {}", String::from_utf8_lossy(&buf));
+                },
+                Err(e) => println!("Error reading from connection: {}", e),
             }
         });
     }
 }
 
-// Client
-// fn main() -> Result<(), Box<dyn Error>> {
-//     // Adresse du serveur
-//     let mut stream = TcpStream::connect("192.168.1.26:7878")?;
-//
-//     // Message à envoyer
-//     let msg = "Bonjour du client !";
-//
-//     // Envoi du message
-//     stream.write_all(msg.as_bytes())?;
-//
-//     println!("Message envoyé au serveur : {}", msg);
-//     Ok(())
-// }
+async fn client() -> io::Result<()> {
+    let config = ClientConfig::builder()
+        .with_safe_defaults()
+        .with_root_certificates(rustls::RootCertStore::empty())
+        .with_no_client_auth();
+    let connector = TlsConnector::from(Arc::new(config));
+    let domain = "star.labo24.swilabus.com";
 
+    // Convertir le domaine en ServerName
+    let domain = ServerName::try_from(domain).expect("Invalid DNS name");
+
+    let stream = TcpStream::connect("192.168.1.26:7878").await?;
+    let mut stream = connector.connect(domain, stream).await.expect("Failed to connect");
+
+    stream.write_all(b"Bonjour du client avec TLS!").await?;
+    println!("Message envoyé au serveur");
+
+    Ok(())
+}
