@@ -1,7 +1,7 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use tokio_rustls::{TlsAcceptor, TlsConnector};
-use rustls::{ServerConfig, ClientConfig, Certificate, PrivateKey, ServerName};
+use rustls::{ServerConfig, ClientConfig, Certificate, PrivateKey, ServerName, RootCertStore};
 use std::sync::Arc;
 use std::fs::File;
 use std::io::BufReader;
@@ -70,15 +70,20 @@ async fn server() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn client() -> io::Result<()> {
+    let mut root_store = RootCertStore::empty();
+    let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
+    let mut reader = BufReader::new(cert_file);
+    let certs = certs(&mut reader).expect("Could not load certificates");
+    for cert in certs {
+        root_store.add(&Certificate(cert)).expect("Failed to add certificate");
+    }
+
     let config = ClientConfig::builder()
         .with_safe_defaults()
-        .with_root_certificates(rustls::RootCertStore::empty())
+        .with_root_certificates(root_store)
         .with_no_client_auth();
     let connector = TlsConnector::from(Arc::new(config));
-    let domain = "star.labo24.swilabus.com";
-
-    // Convertir le domaine en ServerName
-    let domain = ServerName::try_from(domain).expect("Invalid DNS name");
+    let domain = ServerName::try_from("star.labo24.swilabus.com").expect("Invalid DNS name");
 
     let stream = TcpStream::connect("192.168.1.26:7878").await?;
     let mut stream = connector.connect(domain, stream).await.expect("Failed to connect");
