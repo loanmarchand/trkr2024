@@ -1,5 +1,6 @@
 mod components;
 mod protocol;
+mod tls;
 
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
