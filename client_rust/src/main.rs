@@ -1,11 +1,12 @@
-use tokio::net::{TcpListener, TcpStream};
-use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
-use tokio_rustls::{TlsAcceptor, TlsConnector};
-use rustls::{ServerConfig, ClientConfig, Certificate, PrivateKey, ServerName, RootCertStore};
-use std::sync::Arc;
 use std::fs::File;
 use std::io::BufReader;
+use std::sync::Arc;
+
+use rustls::{Certificate, ClientConfig, PrivateKey, RootCertStore, ServerConfig};
 use rustls_pemfile::certs;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio_rustls::{TlsAcceptor, TlsConnector};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,8 +18,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn server() -> Result<(), Box<dyn std::error::Error>> {
-    let cert_file = File::open("src/ressource/certificat.pem")?;
-    let key_file = File::open("src/ressource/cle_privee.pem")?;
+    let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
+    let key_file = File::open("src/ressource/star.labo24.swilabus.com.key")?;
     let mut cert_reader = BufReader::new(cert_file);
     let mut key_reader = BufReader::new(key_file);
 
@@ -46,8 +47,8 @@ async fn server() -> Result<(), Box<dyn std::error::Error>> {
 
     let acceptor = TlsAcceptor::from(Arc::new(config));
 
-    let listener = TcpListener::bind("192.168.1.26:7878").await?;
-    println!("Server listening on 192.168.1.26:7878");
+    let listener = TcpListener::bind("192.168.1.17:7878").await?;
+    println!("Server listening on 192.168.1.17:7878");
 
     loop {
         let (stream, _addr) = listener.accept().await?;
@@ -69,27 +70,42 @@ async fn server() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn client() -> io::Result<()> {
-    let mut root_store = RootCertStore::empty();
-    let cert_file = File::open("src/ressource/chain.pem").expect("Could not open certificate file");
-    let mut reader = BufReader::new(cert_file);
-    let certs = certs(&mut reader).expect("Could not load certificates");
+async fn client() -> Result<(), Box<dyn std::error::Error>> {
+    // Charger les certificats de l'autorité de certification
+    let mut root_cert_store = RootCertStore::empty();
+    let cert_file = File::open("src/ressource/SwilabusIntermediateG21.crt")?;
+    let mut cert_reader = BufReader::new(cert_file);
+    let certs = certs(&mut cert_reader).expect("Failed to read certs");
     for cert in certs {
-        root_store.add(&Certificate(cert)).expect("Failed to add certificate");
+        root_cert_store.add(&Certificate(cert)).expect("Failed to add cert");
+    }
+
+    // Ajouter ici le certificat racine s'il est nécessaire
+    let cert_file = File::open("src/ressource/SwilabusMainCertificateG1.crt")?;
+    let mut cert_reader = BufReader::new(cert_file);
+    let certs = rustls_pemfile::certs(&mut cert_reader).expect("Failed to read root cert");
+    for cert in certs {
+        root_cert_store.add(&Certificate(cert)).expect("Failed to add root cert");
     }
 
     let config = ClientConfig::builder()
         .with_safe_defaults()
-        .with_root_certificates(root_store)
+        .with_root_certificates(root_cert_store)
         .with_no_client_auth();
+
     let connector = TlsConnector::from(Arc::new(config));
-    let domain = ServerName::try_from("star.labo24.swilabus.com").expect("Invalid DNS name");
-
     let stream = TcpStream::connect("star.labo24.swilabus.com:7878").await?;
-    let mut stream = connector.connect(domain, stream).await.expect("Failed to connect");
+    let domain = rustls::ServerName::try_from("star.labo24.swilabus.com")?;
 
-    stream.write_all(b"Bonjour du client avec TLS!").await?;
-    println!("Message envoyé au serveur");
+    let mut stream = connector.connect(domain, stream).await?;
+
+    // Envoyer un message au serveur
+    let message = b"Hello from client!";
+    stream.write_all(message).await?;
+    println!("Message sent to the server: {}", String::from_utf8_lossy(message));
+
+    // Fermer la connexion (Optionnel, selon le protocole)
+    stream.shutdown().await?;
 
     Ok(())
 }
