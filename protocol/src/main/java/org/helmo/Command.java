@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Command {
     private final String CommandType;
-    private String aurl = null;
+    private Aurl aurl = null;
     private String StatusNewmonresp = null;
     private String NewmonrespMessage = null;
     private List<String> idList = null;
@@ -15,7 +15,7 @@ public class Command {
     private String urlEtPath = null;
     private String state = null;
     private String frequency = null;
-    private List<String> aurlList = null;
+    private List<Aurl> aurlList = new ArrayList<>();
     private String protocole = null;
     private String port = null;
 
@@ -26,7 +26,7 @@ public class Command {
     public Command(String commandType,String... data){
         this.CommandType = commandType;
         switch (commandType) {
-            case "NEWMON" -> this.aurl = data[0];
+            case "NEWMON" -> this.aurl = RegexAnalyzer.analyzeAurl(data[0]);
             case "NEWMON_RESP" -> {
                 this.StatusNewmonresp = data[0];
                 this.NewmonrespMessage = data[1];
@@ -42,10 +42,17 @@ public class Command {
                 this.state = data[2];
             }
             case "SETUP" -> {
-                this.aurlList = new ArrayList<>(Arrays.asList(data));
-                this.aurlList.remove(0);
-                this.frequency =  this.aurlList.get(0);
-                this.aurlList.remove(0);
+                List<String> list = new ArrayList<>(Arrays.asList(data));
+                list.remove(0);
+                this.frequency = list.get(0);
+                list.remove(0);
+                for (String aurl:list) {
+                    this.aurlList.add(RegexAnalyzer.analyzeAurl(aurl));
+                }
+                //this.aurlList = new ArrayList<>(Arrays.asList(data));
+                //this.aurlList.remove(0);
+                //this.frequency =  this.aurlList.get(0);
+                //this.aurlList.remove(0);
             }
             case "STATUS" -> {
                 this.id = data[0];
@@ -63,7 +70,7 @@ public class Command {
     public String getCommandType() {
         return CommandType;
     }
-    public String getAurl(){
+    public Aurl getAurl(){
         return aurl;
     }
     public String getStatusNewmonresp(){
@@ -84,7 +91,7 @@ public class Command {
     public String getState(){
         return state;
     }
-    public List<String> getAurlList(){
+    public List<Aurl> getAurlList(){
         return new ArrayList<>(aurlList);
     }
     public String getFrequency(){

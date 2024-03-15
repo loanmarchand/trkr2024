@@ -22,11 +22,11 @@ public class Protocole {
     private static final String password_auth = password + "(?:#" + authentication + ")?";
     private static final String host = "(" + letter_digit + "|\\.|_|-)" + "{3,50}";
     private static final String path = "/(?:" + letter_digit + "|\\.|_|-|/){0,100}";
-    private static final String url = "((" + protocol + ")://(?:(" + username + ")(?::(" + password_auth + "))?@)?(" + host + ")(?::(" + port + "))?(" + path + "))";
+    private static final String url = "(?<protocole>" + protocol + ")://(?:(?<username>(" + username + "))(?::(?<password>" + password_auth + "))?@)?(?<host>" + host + ")(?::(?<port>" + port + "))?(?<path>" + path + ")";
     private static final String min = digit + "{1,8}";
     private static final String max = digit + "{1,8}";
     private static final String frequency = digit + "{1,8}";
-    private static final String augmented_url ="(" + id + ")!" + url + "!(" + min + ")!(" + max + ")";
+    private static final String augmented_url ="(" + id + ")!(" + url + ")!(" + min + ")!(" + max + ")";
     private static final String state = "(?:OK|ALARM|DOWN|UNKNOWN)";
     private static final String message = character + "{1,200}";
 
@@ -41,7 +41,7 @@ public class Protocole {
 
 
 //PROBE <--> MONITOR DEAMON
-    private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"((" + sp + augmented_url+ ")){0,100}" + crlf;
+    private static final String setup = "SETUP" + sp +"(" + frequency + ")" +"(" + sp + augmented_url+ "){0,100}" + crlf;
     private static final String statusof = "STATUSOF" + sp +"(" + id + ")" + crlf;
     private static final String status = "STATUS" + sp + "(" + id + ")" + sp + "(" + state + ")" + crlf;
 
@@ -58,9 +58,13 @@ public class Protocole {
     private static final String URLWUPP_BUILD = "<protocole>://<username>:<password>@<host>:<port><path>";
     private static final String URL_BUILD = "<protocole>://<host><path>";
     private static final String URLP_BUILD = "<protocole>://<host>:<port><path>";
+    private static final String URLWUPO_BUILD = "<protocole>://<username>@<host>:<port><path>";
+    private static final String URLWU_BUILD = "<protocole>://<username>@<host><path>";
 
 
-//CLIENT <--> MONITOR DEAMON builders
+
+
+    //CLIENT <--> MONITOR DEAMON builders
     private static final String NEWMON_BUILD = "NEWMON <aurl>\r\n";
     private static final String NEWMONRESP_BUILD = "<+OK|-ERR> <message?>\r\n";
     private static final String LISTMON_BUILD = "LISTMON\r\n";
@@ -78,6 +82,14 @@ public class Protocole {
 //MULTICAST builders
     private static final String PROBE_BUILD = "PROBE <protocol> <port>\r\n";
     private static final String DATA_BUILD = "DATA <protocol> <port>\r\n";
+
+
+    public static String getAurl(){
+        return augmented_url;
+    }
+    public static String getUrl(){
+        return url;
+    }
 
 
 
@@ -137,6 +149,12 @@ public class Protocole {
     public static String getUrlpBuild(){
         return URLP_BUILD;
     }
+    public static String getUrlwuBuild(){
+        return URLWU_BUILD;
+    }
+    public static String getUrlwupoBuild(){
+        return URLWUPO_BUILD;
+    }
 
 
 
@@ -182,9 +200,8 @@ public class Protocole {
 
     public static void main(String[] args) {
         // Exemple d'utilisation de certaines expressions régulières
-        String sampleText = "SETUP 10 http1!https://www.swilabus.com/!0!1500 http2!https://www.swilabus.be/!0!2000 http3!https://www.swilabus.com/trkr1!0!1700 http4!https://www.swilabus.com/trkr2!0!1800\r\n";
-        System.out.println(data);
-        if (Pattern.matches(setup, sampleText)) {
+        String sampleText = "imap1!imap://trkr@credentials.json:0/!0!10";
+        if (Pattern.matches(url, sampleText)) {
             System.out.println("La chaîne correspond au pattern.");
         } else {
             System.out.println("La chaîne ne correspond pas au pattern.");

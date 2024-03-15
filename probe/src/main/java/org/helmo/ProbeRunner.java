@@ -14,7 +14,7 @@ public class ProbeRunner {
         String probeType = args[0].toLowerCase();
         JsonHelper jsonHelper = new JsonHelper();
         switch (probeType) {
-            case "https":
+            case "http":
                 runHttpsProbe(jsonHelper.readConfigProbe(CONFIG_PROBES_HTTPS));
                 break;
             case "snmp":
@@ -30,18 +30,18 @@ public class ProbeRunner {
     }
 
     private static void runImapProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 
 
     private static void runHttpsProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 
     private static void runSnmpProbe(ConfigProbes configProbes) {
-        ProbeAsbtract probe = new Probe(configProbes);
+        Probe probe = new Probe(configProbes);
         probe.start();
     }
 }

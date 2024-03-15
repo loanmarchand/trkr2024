@@ -15,6 +15,7 @@ dependencies {
     implementation project(':protocol')
     implementation project(':json')
     implementation project(':domains')
+    implementation project(':chiffrement')
 }
 
 test {

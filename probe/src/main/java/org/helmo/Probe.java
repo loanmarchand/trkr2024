@@ -6,14 +6,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class Probe extends ProbeAsbtract {
+public class Probe {
     private ServerSocket serverSocket;
     private boolean running;
     private final ScheduledExecutorService scheduler;
-    private ProbeRunable probeRunable = null;
+    private AbstractProbeTask abstractProbeTask = null;
+    private final ConfigProbes configProbes;
 
     public Probe(ConfigProbes configProbes) {
-        super(configProbes);
+        this.configProbes = configProbes;
         this.running = false;
 
         this.scheduler = Executors.newScheduledThreadPool(3);
@@ -23,7 +24,6 @@ public class Probe extends ProbeAsbtract {
         }));
     }
 
-    @Override
     public void start() {
         System.out.println("Starting the HTTPS probe");
 
@@ -44,7 +44,6 @@ public class Probe extends ProbeAsbtract {
 
 
 
-    @Override
     public void stop() {
         running = false;
         scheduler.shutdownNow();
@@ -59,7 +58,6 @@ public class Probe extends ProbeAsbtract {
     }
 
 
-    @Override
     public void startThreadLoop(Runnable runnable, long delay) {
         scheduler.scheduleWithFixedDelay(() -> {
             if (running) {
@@ -67,7 +65,6 @@ public class Probe extends ProbeAsbtract {
             }
         }, 0, delay, TimeUnit.SECONDS);
     }
-    @Override
     public void sendMulticastMessage(String message) {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
@@ -97,35 +94,39 @@ public class Probe extends ProbeAsbtract {
             Socket socket = serverSocket.accept();
             switch (configProbes.protocol()) {
                 case "http":
-                    if (probeRunable == null) {
-                        probeRunable = new ProbeHttpsRunable(socket, this);
-                        new Thread(probeRunable).start();
+                    if (abstractProbeTask == null) {
+                        abstractProbeTask = new HttpClientProbeTask(socket, this);
+                        new Thread(abstractProbeTask).start();
                     }
                     else {
-                        probeRunable.updateProbe(socket);
+                        abstractProbeTask.updateProbe(socket);
                     }
                     break;
                 case "snmp":
-                    if (probeRunable == null) {
-                        probeRunable = new ProbeSnmpRunable(socket, this);
-                        new Thread(probeRunable).start();
+                    if (abstractProbeTask == null) {
+                        abstractProbeTask = new SnmpClientProbeTask(socket, this);
+                        new Thread(abstractProbeTask).start();
                     }
                     else {
-                        probeRunable.updateProbe(socket);
+                        abstractProbeTask.updateProbe(socket);
                     }
                     break;
                 case "imap":
-                    if (probeRunable == null) {
-                        probeRunable = new ProbeImapRunable(socket, this);
-                        new Thread(probeRunable).start();
+                    if (abstractProbeTask == null) {
+                        abstractProbeTask = new ImapClientProbetask(socket, this);
+                        new Thread(abstractProbeTask).start();
                     }
                     else {
-                        probeRunable.updateProbe(socket);
+                        abstractProbeTask.updateProbe(socket);
                     }
                     break;
             }
         } catch (IOException e) {
             System.out.println("Erreur lors de l'acceptation de la connexion : " + e.getMessage());
         }
+    }
+
+    public ConfigProbes getConfigProbes() {
+        return configProbes;
     }
 }

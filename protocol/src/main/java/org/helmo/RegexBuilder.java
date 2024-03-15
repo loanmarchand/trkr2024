@@ -18,10 +18,18 @@ public class RegexBuilder {
         }else{
             if (url.port() == -1){
                 //Pass mais pas port
-                return Protocole.getUrlwupBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<username>",url.user()).replace("<password>",url.password());
+                if(url.password() == null){
+                    return Protocole.getUrlwuBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<username>",url.user());
+                }else{
+                    return Protocole.getUrlwupBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<username>",url.user()).replace("<password>",url.password());
+                }
             }else{
                 //Pass et port
-                return Protocole.getUrlwuppBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<port>",String.valueOf(url.port())).replace("<username>",url.user()).replace("<password>",url.password());
+                if(url.password() == null){
+                    return Protocole.getUrlwupoBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<port>",String.valueOf(url.port())).replace("<username>",url.user());
+                }else{
+                    return Protocole.getUrlwuppBuild().replace("<protocole>",url.protocol()).replace("<host>",url.host()).replace("<path>", url.path()).replace("<port>",String.valueOf(url.port())).replace("<username>",url.user()).replace("<password>",url.password());
+                }
             }
         }
     }
