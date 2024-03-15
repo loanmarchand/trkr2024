@@ -10,15 +10,15 @@ use rustls_pemfile::certs;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Mettre en commentaire en fonction de ce que l'on veut tester
-    server().await?;
-    // client().await?;
+    // server().await?;
+    client().await?;
 
     Ok(())
 }
 
 async fn server() -> Result<(), Box<dyn std::error::Error>> {
-    let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
-    let key_file = File::open("src/ressource/star.labo24.swilabus.com.key")?;
+    let cert_file = File::open("src/ressource/certificat.pem")?;
+    let key_file = File::open("src/ressource/cle_privee.pem")?;
     let mut cert_reader = BufReader::new(cert_file);
     let mut key_reader = BufReader::new(key_file);
 
@@ -71,7 +71,7 @@ async fn server() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn client() -> io::Result<()> {
     let mut root_store = RootCertStore::empty();
-    let cert_file = File::open("src/ressource/star.labo24.swilabus.com.crt")?;
+    let cert_file = File::open("src/ressource/chain.pem").expect("Could not open certificate file");
     let mut reader = BufReader::new(cert_file);
     let certs = certs(&mut reader).expect("Could not load certificates");
     for cert in certs {
@@ -85,7 +85,7 @@ async fn client() -> io::Result<()> {
     let connector = TlsConnector::from(Arc::new(config));
     let domain = ServerName::try_from("star.labo24.swilabus.com").expect("Invalid DNS name");
 
-    let stream = TcpStream::connect("192.168.1.26:7878").await?;
+    let stream = TcpStream::connect("star.labo24.swilabus.com:7878").await?;
     let mut stream = connector.connect(domain, stream).await.expect("Failed to connect");
 
     stream.write_all(b"Bonjour du client avec TLS!").await?;
