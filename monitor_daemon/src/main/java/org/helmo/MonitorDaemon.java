@@ -104,9 +104,6 @@ public class MonitorDaemon {
             message = aesEncryption.encrypt(message, configMonitor.aesKey());
             out.println(message);
             out.flush();
-
-            System.out.println("STATUSOF sent to probe: " + message);
-
             // Attente de la réponse STATUS
             String encryptedResponse = in.readLine();
             if (encryptedResponse != null) {
