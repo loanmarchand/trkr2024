@@ -9,8 +9,8 @@ use std::io::Read;
 async fn main() -> io::Result<()> {
     // Chemins vers les fichiers de certificat
     let ca_file_paths = [
-        "C:\\Users\\Thibaut\\IdeaProjects\\trkr2024\\client_rust\\src\\ressource\\SwilabusIntermediateG21.crt",
-        "C:\\Users\\Thibaut\\IdeaProjects\\trkr2024\\client_rust\\src\\ressource\\SwilabusMainCertificateG1.crt",
+        "src/ressource/SwilabusIntermediateG21.crt",
+        "src/ressource/SwilabusMainCertificateG1.crt",
     ];
 
     // Construire le connecteur TLS
@@ -36,7 +36,7 @@ async fn main() -> io::Result<()> {
     let (_, mut writer) = io::split(stream);
 
     // Exemple de message à envoyer
-    let msg = "Hello, server!\n";
+    let msg = "Hello, server 3!\n";
     writer.write_all(msg.as_bytes()).await.expect("failed to write data");
 
     Ok(())
