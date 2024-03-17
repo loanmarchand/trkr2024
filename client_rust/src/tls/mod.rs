@@ -5,7 +5,7 @@ use native_tls::Certificate;
 use std::fs::File;
 use std::io::Read;
 
-pub async fn connect_tls() -> io::Result<()> {
+pub async fn connect_tls(message: &str) -> io::Result<()> {
     let ca_file_paths = [
         "src/ressource/SwilabusIntermediateG21.crt",
         "src/ressource/SwilabusMainCertificateG1.crt",
@@ -29,8 +29,7 @@ pub async fn connect_tls() -> io::Result<()> {
 
     let (_, mut writer) = io::split(stream);
 
-    let msg = "Hello, server 3!\n";
-    writer.write_all(msg.as_bytes()).await.expect("failed to write data");
+    writer.write_all(message.as_bytes()).await.expect("failed to write data");
 
     Ok(())
 }

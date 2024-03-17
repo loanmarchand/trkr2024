@@ -1,20 +1,26 @@
+use druid::{AppLauncher, Color, Key, PlatformError, Widget, WidgetExt, WindowDesc, WindowState};
+use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
+use druid_derive::{Data, Lens};
+
+use components::text::text_component;
+use components::title::title_component;
+use components::title_lvl_1::title_lvl_1_component;
+use protocol::protocol::Protocol;
+use tokio::spawn;
+
+use crate::protocol::protocol::get_aurl_regex;
+
 mod components;
 mod protocol;
 mod tls;
 
-use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
-use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
-use druid_derive::{Data, Lens};
-use components::title::title_component;
-use components::title_lvl_1::title_lvl_1_component;
-use components::text::text_component;
-use protocol::protocol::Protocol;
-use crate::protocol::protocol::get_aurl_regex; // dossier::fichier::struct
+// dossier::fichier::struct
 
 // Constantes
 const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
 
-fn main() -> Result<(), PlatformError> {
+#[tokio::main]
+async fn main() -> Result<(), PlatformError> {
     let app_state = AppState {
         input_new_url: String::new(),
         service_name: String::from("no_data"),
@@ -41,7 +47,7 @@ fn main() -> Result<(), PlatformError> {
         .launch(app_state)
 }
 
-fn ui_builder() -> impl Widget<(AppState)> {
+fn ui_builder() -> impl Widget<AppState> {
     // Créer le titre centré dans un Flex
     let header = Flex::<AppState>::row()
         .with_flex_spacer(1.0)
@@ -158,7 +164,7 @@ fn ui_builder() -> impl Widget<(AppState)> {
     main_layout
 }
 
-fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<(AppState)>) -> SizedBox<(AppState)> {
+fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<AppState>) -> SizedBox<AppState> {
     let left_sidebar = monitored_services.iter().fold(left_sidebar, |column, service| {
         let service_owned = service.to_string();
         let processed_service = insert_line_breaks(&service_owned, 30);
@@ -281,7 +287,12 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
 
             let newmon_request = Protocol::build_newmon(&data.input_new_url);
 
-            println!("Requete à envoyer au moniteur: {}", newmon_request);
+            println!("Requête à envoyer au moniteur: {}", newmon_request);
+
+            let newmon_request_clone = newmon_request.clone();
+            spawn(async move {
+                tls::connect_tls(&newmon_request_clone).await.expect("TLS connection failed");
+            });
         }
         None => {
             println!("L'URL n'est pas valide");
@@ -294,6 +305,9 @@ fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::
     let request_request = Protocol::build_request(&data.service_name_state);
 
     println!("Requete à envoyer au moniteur: {}", request_request);
+    spawn(async move {
+        tls::connect_tls(&request_request).await.expect("TLS connection failed");
+    });
 }
 
 fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
@@ -301,6 +315,9 @@ fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &d
     let listmon_request = Protocol::build_listmon();
 
     println!("Requete à envoyer au moniteur: {}", listmon_request);
+    spawn(async move {
+        tls::connect_tls(&listmon_request).await.expect("TLS connection failed");
+    });
 }
 
 #[derive(Clone, Data, Lens)]
