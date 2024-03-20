@@ -66,4 +66,16 @@ public class TlsServer {
         thread.start();
 
     }
+
+    public boolean AddMonitor(Command command) {
+        return true;
+    }
+
+    public List<String> getIdAurl() {
+        return new ArrayList<>();
+    }
+
+    public ResultState getMonitor(String id) {
+        return new ResultState(null,"OK");
+    }
 }

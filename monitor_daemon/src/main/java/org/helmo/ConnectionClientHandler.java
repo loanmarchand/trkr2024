@@ -34,11 +34,41 @@ public class ConnectionClientHandler implements Runnable {
                     running = false;
                     break;
                 }
+                if (Objects.equals(command.getCommandType(), "NEWMON")) {
+                    handleNewMonCommand(command);
+                }
+                if (Objects.equals(command.getCommandType(), "LISTMON")) {
+                    handleListMonCommand();
+                }
+                if (Objects.equals(command.getCommandType(), "REQUEST")) {
+                    handleRequestCommand(command);
+                }
+                else {
+                    System.out.println("Commande non reconnue");
+                }
             }
             close();
         } catch (IOException e) {
             System.out.println("Erreur lors de la lecture de la commande: " + e.getMessage());
             close();
+        }
+    }
+
+    private void handleRequestCommand(Command command) {
+        ResultState result = tlsServer.getMonitor(command.getId());
+        out.println(MessageBuilder.buildRespond(command.getId(),result.url(),result.state()));
+    }
+
+    private void handleListMonCommand() {
+        out.println(MessageBuilder.buildMon(tlsServer.getIdAurl()));
+    }
+
+    private void handleNewMonCommand(Command command) {
+        boolean result = tlsServer.AddMonitor(command);
+        if (result) {
+            out.println(MessageBuilder.buildNewmonResp("+OK"));
+        } else {
+            out.println(MessageBuilder.buildNewmonResp("-ERR", "Monitor already exists"));
         }
     }
 
