@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 pub(crate) struct Protocol;
+pub(crate) struct ResponseParser;
 
 impl Protocol {
     const NEWMON_BUILD: &'static str = "NEWMON <aurl>\r\n";
@@ -16,6 +17,31 @@ impl Protocol {
     }
     pub fn build_request(id: &str) -> String {
         Self::REQUEST_BUILD.replace("<id>", id)
+    }
+}
+
+impl ResponseParser {
+    pub fn parse_response(response: &str) -> Result<String, &'static str> {
+        lazy_static! {
+            static ref NEWMON_RESP_REGEX: Regex = Regex::new(r"^\+OK|-ERR(?: (.*))?\r\n$").unwrap();
+            static ref MON_REGEX: Regex = Regex::new(r"^MON(?: (.*))?\r\n$").unwrap();
+            static ref RESPOND_REGEX: Regex = Regex::new(r"^RESPOND ([A-Za-z0-9]{5,10}) ([A-Za-z0-9]{3,15}://[^\s]+) (OK|ALARM|DOWN|UNKNOWN)\r\n$").unwrap();
+        }
+
+        if let Some(caps) = NEWMON_RESP_REGEX.captures(response) {
+            return Ok(format!("Newmon Response: {}", caps.get(1).map_or("", |m| m.as_str())));
+        } else if let Some(caps) = MON_REGEX.captures(response) {
+            return Ok(format!("List of Monitors: {}", caps.get(1).map_or("", |m| m.as_str())));
+        } else if let Some(caps) = RESPOND_REGEX.captures(response) {
+            return Ok(format!(
+                "Respond: ID={} URL={} State={}",
+                caps.get(1).unwrap().as_str(),
+                caps.get(2).unwrap().as_str(),
+                caps.get(3).unwrap().as_str()
+            ));
+        }
+
+        Err("Unknown response type")
     }
 }
 

@@ -1,12 +1,12 @@
-use druid::{AppLauncher, Color, Key, PlatformError, Widget, WidgetExt, WindowDesc, WindowState};
+use druid::{AppDelegate, AppLauncher, Color, Command, DelegateCtx, Env, Handled, Key, PlatformError, Selector, Target, Widget, WidgetExt, WindowDesc, WindowState};
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
 use druid_derive::{Data, Lens};
+use tokio::spawn;
 
 use components::text::text_component;
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
 use protocol::protocol::Protocol;
-use tokio::spawn;
 
 use crate::protocol::protocol::get_aurl_regex;
 
@@ -15,12 +15,13 @@ mod protocol;
 mod tls;
 
 // dossier::fichier::struct
+pub const UPDATE_SERVICE_RESPONSE: Selector<String> = Selector::new("update-service-response");
 
 // Constantes
 const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
 
 #[tokio::main]
-async fn main() -> Result<(), PlatformError> {
+async fn main() {
     let app_state = AppState {
         input_new_url: String::new(),
         service_name: String::from("no_data"),
@@ -44,7 +45,8 @@ async fn main() -> Result<(), PlatformError> {
         .set_window_state(WindowState::Maximized);
 
     AppLauncher::with_window(main_window)
-        .launch(app_state)
+        .delegate(YourDelegate {})
+        .launch(app_state).expect("TODO: panic message");
 }
 
 fn ui_builder() -> impl Widget<AppState> {
@@ -290,9 +292,20 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
             println!("Requête à envoyer au moniteur: {}", newmon_request);
 
             let newmon_request_clone = newmon_request.clone();
+            // Crée une nouvelle tâche asynchrone et capture la sortie
             spawn(async move {
-                tls::connect_tls(&newmon_request_clone).await.expect("TLS connection failed");
+                match tls::connect_tls_and_receive(&newmon_request_clone).await {
+                    Some(response) => {
+                        // Affiche la réponse du serveur
+                        println!("Réponse du serveur: {}", response);
+                    }
+                    None => {
+                        // Gère l'absence de réponse, ce qui implique une erreur dans la connexion ou la lecture de la réponse
+                        println!("Erreur de connexion TLS ou aucune réponse reçue");
+                    }
+                }
             });
+
         }
         None => {
             println!("L'URL n'est pas valide");
@@ -301,22 +314,39 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
     }
 }
 
-fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
+fn watch_service(ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
     let request_request = Protocol::build_request(&data.service_name_state);
+    let event_sink = ctx.get_external_handle();
 
     println!("Requete à envoyer au moniteur: {}", request_request);
     spawn(async move {
-        tls::connect_tls(&request_request).await.expect("TLS connection failed");
+        match tls::connect_tls_and_receive(&request_request).await {
+            Some(response) => {
+                println!("Réponse du serveur: {}", response);
+                // On met à jour l'état du service
+                event_sink.submit_command(UPDATE_SERVICE_RESPONSE, response, Target::Auto)
+                    .expect("Failed to submit command");
+            }
+            None => {
+                println!("Erreur de connexion TLS ou aucune réponse reçue");
+            }
+        }
     });
 }
 
 fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    // On construit la requête
     let listmon_request = Protocol::build_listmon();
 
     println!("Requete à envoyer au moniteur: {}", listmon_request);
     spawn(async move {
-        tls::connect_tls(&listmon_request).await.expect("TLS connection failed");
+        match tls::connect_tls_and_receive(&listmon_request).await {
+            Some(response) => {
+                println!("Réponse du serveur: {}", response);
+            }
+            None => {
+                println!("Erreur de connexion TLS ou aucune réponse reçue");
+            }
+        }
     });
 }
 
@@ -337,4 +367,26 @@ struct AppState {
     service_min: String,
     service_max: String,
     service_validation_message: String,
+}
+struct YourDelegate;
+
+impl AppDelegate<AppState> for YourDelegate {
+    fn command(
+        &mut self,
+        _ctx: &mut DelegateCtx,
+        _target: Target,
+        cmd: &Command,
+        data: &mut AppState,
+        _env: &Env,
+    ) -> Handled {
+        if let Some(response) = cmd.get(UPDATE_SERVICE_RESPONSE) {
+            // Afficher un message dans la console pour voir si la commande a été reçue
+            println!("Commande reçue: {}", response);
+            // Mettez à jour l'état avec la réponse
+            data.service_state = response.clone();
+            Handled::Yes // Indiquez que la commande a été gérée
+        } else {
+            Handled::No // Les commandes non gérées continueront à être propagées
+        }
+    }
 }
