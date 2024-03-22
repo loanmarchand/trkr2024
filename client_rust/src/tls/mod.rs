@@ -33,11 +33,11 @@ pub async fn connect_tls_and_receive(message: &str) -> Option<String> {
         Err(_) => return None, // Gestion simplifiée de l'erreur
     };
 
-    let stream = match TcpStream::connect("star.labo24.swilabus.com:7878").await {
+    let stream = match TcpStream::connect("trkr.labo24.swilabus.com:60223").await {
         Ok(stream) => stream,
         Err(_) => return None, // Gestion simplifiée de l'erreur
     };
-    let domain = "star.labo24.swilabus.com";
+    let domain = "trkr.labo24.swilabus.com";
     let stream = match connector.connect(domain, stream).await {
         Ok(stream) => stream,
         Err(_) => return None, // Gestion simplifiée de l'erreur
