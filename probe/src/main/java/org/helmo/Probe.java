@@ -66,7 +66,8 @@ public class Probe {
         }, 0, delay, TimeUnit.SECONDS);
     }
     public void sendMulticastMessage(String message) {
-        try (DatagramSocket socket = new DatagramSocket()) {
+        try (MulticastSocket socket = new MulticastSocket(configProbes.multicastPort())) {
+            socket.setNetworkInterface(NetworkInterface.getByName(configProbes.multicastInterface()));
             socket.setBroadcast(true);
             byte[] buffer = message.getBytes();
             InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
