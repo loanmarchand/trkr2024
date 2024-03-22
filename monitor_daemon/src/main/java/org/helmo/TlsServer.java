@@ -40,10 +40,7 @@ public class TlsServer {
 
             // Création du serveur Socket
             SSLServerSocketFactory sslServerSocketFactory = sslContext.getServerSocketFactory();
-            // Création du serveur Socket en spécifiant une adresse IP
-            InetSocketAddress address = new InetSocketAddress("trkr.labo24.swilabus.com", port);
-            serverSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port, 0, InetAddress.getByName("trkr.labo24.swilabus.com"));
-
+            serverSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(port);
             System.out.println("Serveur en attente de connexion sur le port " + port + "...");
 
             while (true){

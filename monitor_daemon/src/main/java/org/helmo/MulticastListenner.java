@@ -17,6 +17,9 @@ public class MulticastListenner implements Runnable{
             this.multicastSocket = new MulticastSocket(configMonitor.multicastPort());
             NetworkInterface networkInterface = NetworkInterface.getByName(configMonitor.multicastInterface());
             this.multicastSocket.joinGroup(new InetSocketAddress(group, configMonitor.multicastPort()), networkInterface);
+            //Print l'adresse et le port du groupe multicast
+            System.out.println("Adresse du groupe multicast: " + group.getHostAddress());
+            System.out.println("Port du groupe multicast: " + configMonitor.multicastPort());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

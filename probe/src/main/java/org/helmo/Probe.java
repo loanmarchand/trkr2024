@@ -72,6 +72,9 @@ public class Probe {
             InetAddress group = InetAddress.getByName(configProbes.multicastAddress());
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, configProbes.multicastPort());
             socket.send(packet);
+            //Afiicher l'ip et le port du groupe multicast
+            System.out.println("Adresse du groupe multicast: " + group.getHostAddress());
+            System.out.println("Port du groupe multicast: " + configProbes.multicastPort());
             System.out.println("Annonce multicast envoyée : " + message);
         } catch (IOException e) {
             System.err.println("Erreur lors de l'envoi de l'annonce multicast : " + e.getMessage());

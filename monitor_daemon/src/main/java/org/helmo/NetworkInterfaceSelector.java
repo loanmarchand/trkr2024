@@ -15,7 +15,7 @@ public class NetworkInterfaceSelector {
             System.out.println("Interfaces réseau disponibles :");
             int index = 1;
             for (NetworkInterface ni : Collections.list(interfaces)) {
-                System.out.println(index++ + " - " + ni.getName());
+                System.out.println(index++ + " - " + ni.getDisplayName());
             }
 
 

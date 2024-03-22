@@ -1,5 +1,5 @@
 {
-  "multicastAddress": "224.0.0.254",
+  "multicastAddress": "224.1.1.255",
   "multicastPort": 60203,
   "multicastInterface": "wlp0s20f3",
   "clientPort": 60223,
