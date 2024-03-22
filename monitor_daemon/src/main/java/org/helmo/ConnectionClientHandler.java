@@ -29,17 +29,16 @@ public class ConnectionClientHandler implements Runnable {
                 System.out.println("Commande reçue: " + configLine);
                 Command command = MessageAnalyzer.analyzeMessage(configLine);
 
-                assert command != null;
                 if (Objects.equals(command.getCommandType(), "STOP")) {
                     running = false;
                     break;
-                }
+                }else
                 if (Objects.equals(command.getCommandType(), "NEWMON")) {
                     handleNewMonCommand(command);
-                }
+                }else
                 if (Objects.equals(command.getCommandType(), "LISTMON")) {
                     handleListMonCommand();
-                }
+                }else
                 if (Objects.equals(command.getCommandType(), "REQUEST")) {
                     handleRequestCommand(command);
                 }
@@ -60,7 +59,10 @@ public class ConnectionClientHandler implements Runnable {
     }
 
     private void handleListMonCommand() {
+        System.out.println(MessageBuilder.buildMon(tlsServer.getIdAurl()));
         out.println(MessageBuilder.buildMon(tlsServer.getIdAurl()));
+        out.flush();
+        System.out.println("ok");
     }
 
     private void handleNewMonCommand(Command command) {

@@ -2,7 +2,7 @@
   "protocol": "http",
   "multicastAddress": "224.1.1.255",
   "multicastPort": 60203,
-  "multicastInterface": "wlp0s20f3",
+  "multicastInterface": "en0",
   "multicastDelay": 5,
   "unicastPort": 60213,
   "aesKey": "853QlfQasa2OJQlokSYPUZwzhH25sWmcvBkV1yD0Q1yDbf4uB/SHVVdGphA7V2nA4iE78EUikhj95iltTO98gKj3ueX/KxXRkkXtUL+Vk8Ep+xghJk4Ydtm+VDmkQfwVY/3OPLa4HjkGZOZ8Bge+Bg16tdpiUxTwYD+g62NgLpSODP1m/zcOVA8WJ9eUxL+gSrmCtnlpeEc6OQoI8rDOBHgBlfFSk0E+dE0iX2m/HDauUdG7Q4KAD16pH5Wfrgte4ZF449twZMZzm2Hg9JmVPuR0cuEw0qkeeclwN+ZDPN6aVy0s2uwG0RgpNn2rjCKNrNzMcALWckzpAp9plU8TcQ=="

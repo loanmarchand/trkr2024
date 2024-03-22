@@ -9,11 +9,11 @@ public class MessageAnalyzerTest {
 
     @Test
     void NewmonTest() {
-        Command testing = MessageAnalyzer.analyzeMessage("NEWMON monid!https://salute.sal/ezajo!57575!54645654\r\n");
+        Command testing = MessageAnalyzer.analyzeMessage("NEWMON http1!https://www.swilabus.com/!0!1500\r\n");
         assert testing != null;
         assertEquals("NEWMON", testing.getCommandType());
-        assertEquals(testing.getAurl().type(),"monid");
-        assertEquals(testing.getAurl().max(),54645654);
+        assertEquals(testing.getAurl().type(),"http1");
+        assertEquals(testing.getAurl().max(),1500);
     }
     @Test
     void NewmonrespTest() {
