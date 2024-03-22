@@ -23,7 +23,7 @@ public class MonitorDaemon {
         this.worker = new LinkedBlockingQueue<>();
         this.executor = new ThreadPoolExecutor(10,50,60, TimeUnit.SECONDS,worker);
         configMonitor.probes().forEach(aurl -> aurlStatus.put(aurl, "UNKNOWN"));
-        tlsServer = new TlsServer(configMonitor.clientPort());
+        tlsServer = new TlsServer(configMonitor.clientPort(), this);
         multicastListenner = new MulticastListenner(configMonitor,worker,this);
     }
 
@@ -105,5 +105,25 @@ public class MonitorDaemon {
         ConfigMonitor configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
         MonitorDaemon monitorDaemon = new MonitorDaemon(configMonitor);
         monitorDaemon.start();
+    }
+
+    public boolean addMonitor(Aurl aurl) {
+        if (aurlStatus.containsKey(aurl)) {
+            return false;
+        }
+        aurlStatus.put(aurl, "UNKNOWN");
+        return true;
+    }
+
+    public List<String> getIdAurls() {
+        return aurlStatus.keySet().stream().map(Aurl::type).toList();
+    }
+
+    public ResultState getMonitor(String id) {
+        Aurl aurl = aurlStatus.keySet().stream().filter(a -> a.type().equals(id)).findFirst().orElse(null);
+        if (aurl == null) {
+            return null;
+        }
+        return new ResultState(aurl.url(), aurlStatus.get(aurl));
     }
 }

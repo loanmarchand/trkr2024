@@ -12,10 +12,10 @@ import java.util.List;
 public class TlsServer {
     private final int port;
     private SSLServerSocket serverSocket;
-    private List<SSLSocket> sslSocketList;
-    public TlsServer(int port) {
+    private final MonitorDaemon monitorDaemon;
+    public TlsServer(int port, MonitorDaemon monitorDaemon) {
         this.port = port;
-        sslSocketList = new ArrayList<>();
+        this.monitorDaemon = monitorDaemon;
     }
 
     public void Run(){
@@ -59,7 +59,6 @@ public class TlsServer {
     private void handleConnection() throws IOException {
         // Attente de connexion
         SSLSocket socket = (SSLSocket) serverSocket.accept();
-        sslSocketList.add(socket);
         System.out.println("Nouvelle connexion: " + socket.getInetAddress().getHostAddress());
         // Création d'un thread pour gérer la connexion
         Thread thread = new Thread(new ConnectionClientHandler(socket,this));
@@ -68,14 +67,14 @@ public class TlsServer {
     }
 
     public boolean AddMonitor(Command command) {
-        return true;
+        return monitorDaemon.addMonitor(command.getAurl());
     }
 
     public List<String> getIdAurl() {
-        return new ArrayList<>();
+        return monitorDaemon.getIdAurls();
     }
 
     public ResultState getMonitor(String id) {
-        return new ResultState(null,"OK");
+        return monitorDaemon.getMonitor(id);
     }
 }
