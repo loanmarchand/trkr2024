@@ -13,7 +13,8 @@ public class ConnectionClientHandler implements Runnable {
         this.tlsServer = tlsServer;
         try {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+            this.out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
         } catch (IOException e) {
             System.out.println("Erreur lors de la création du BufferedReader et du PrintWriter: " + e.getMessage());
         }
@@ -61,7 +62,6 @@ public class ConnectionClientHandler implements Runnable {
     private void handleListMonCommand() {
         System.out.println(MessageBuilder.buildMon(tlsServer.getIdAurl()));
         out.println(MessageBuilder.buildMon(tlsServer.getIdAurl()));
-        out.flush();
         System.out.println("ok");
     }
 
