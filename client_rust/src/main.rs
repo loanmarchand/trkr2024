@@ -1,18 +1,45 @@
-mod components;
+use std::sync::Arc;
 
+use druid::{AppDelegate, AppLauncher, Color, Command, DelegateCtx, Env, Handled, Key, Selector, Target, Widget, WidgetExt, WindowDesc, WindowState};
 use druid::widget::{Button, Flex, Label, SizedBox, TextBox};
-use druid::{AppLauncher, Widget, WidgetExt, WindowDesc, PlatformError, WindowState, Color, Key};
 use druid_derive::{Data, Lens};
-use regex::Regex;
+use tokio::spawn;
+
+use components::text::text_component;
 use components::title::title_component;
 use components::title_lvl_1::title_lvl_1_component;
-use components::text::text_component;
+use protocol::protocol::Protocol;
+
+use crate::protocol::protocol::get_aurl_regex;
+
+mod components;
+mod protocol;
+mod tls;
+
+// dossier::fichier::struct
+pub const UPDATE_SERVICE_RESPONSE: Selector<String> = Selector::new("update-service-response");
+pub const UPDATE_LIST_SERVICE_RESPONSE: Selector<String> = Selector::new("update-list-service-response");
 
 // Constantes
 const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
 
-fn main() -> Result<(), PlatformError> {
-    let app_state = AppState {
+#[tokio::main]
+async fn main() {
+    // Création d'un Vec temporaire avec vos chaînes de caractères
+    let temp_services = vec![
+        "snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0".to_string(),
+        "snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0".to_string(),
+        "https://www.swilabus.com/".to_string(),
+        "https://www.swilabus.be/".to_string(),
+        "https://www.swilabus.com/trkr1".to_string(),
+        "https://www.swilabus.com/trkr2".to_string(),
+    ];
+
+    // Conversion vers Arc<Vec<String>>,
+    let monitored_services = Arc::new(temp_services);
+
+    // Utilisation de ce im::Vector pour initialiser AppState
+    let mut app_state = AppState {
         input_new_url: String::new(),
         service_name: String::from("no_data"),
         service_state: String::from("no_data"),
@@ -28,17 +55,19 @@ fn main() -> Result<(), PlatformError> {
         service_max: String::from("no_data"),
         service_validation_message: String::from(""),
         service_name_state: String::from("no_data"),
+        monitored_services, // Utilisez le vecteur immuable ici
     };
 
-    let main_window = WindowDesc::new(ui_builder())
+    let main_window = WindowDesc::new(ui_builder(app_state.clone()))
         .title("Trkr Client")
         .set_window_state(WindowState::Maximized);
 
     AppLauncher::with_window(main_window)
-        .launch(app_state)
+        .delegate(YourDelegate {})
+        .launch(app_state).expect("TODO: panic message");
 }
 
-fn ui_builder() -> impl Widget<(AppState)> {
+fn ui_builder(state: AppState) -> impl Widget<AppState> {
     // Créer le titre centré dans un Flex
     let header = Flex::<AppState>::row()
         .with_flex_spacer(1.0)
@@ -47,14 +76,6 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .border(BORDER_COLOR, 1.0)
         .expand_width();
 
-    let monitored_services = vec![
-        "snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0",
-        "snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0",
-        "https://www.swilabus.com/",
-        "https://www.swilabus.be/",
-        "https://www.swilabus.com/trkr1",
-        "https://www.swilabus.com/trkr2",
-    ];
 
     // Créer la section de gauche avec la liste des services monitorés
     let left_sidebar = Flex::<AppState>::column()
@@ -63,11 +84,10 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_child(Button::new("Actualiser").on_click(update_service_list))
         .with_spacer(8.0);
 
+    let left_sidebar = set_list_view(state.monitored_services, left_sidebar);
 
-    let left_sidebar = set_list_view(monitored_services, left_sidebar);
-
-    // Créer une section qui va afficher les différents éléments d'un service
-    let service_table = Flex::column()
+    // left_service_table
+    let left_service_table = Flex::column()
         .with_child(Label::new(|data: &AppState, _env: &_| "ID: ".to_string() + &data.service_id))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Protocol: ".to_string() + &data.service_protocol))
@@ -77,7 +97,10 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_child(Label::new(|data: &AppState, _env: &_| "Password: ".to_string() + &data.service_password))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Authentication: ".to_string() + &data.service_authentication))
-        .with_spacer(8.0)
+        .with_spacer(8.0);
+
+
+    let right_service_table = Flex::column()
         .with_child(Label::new(|data: &AppState, _env: &_| "Host: ".to_string() + &data.service_host))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Port: ".to_string() + &data.service_port))
@@ -87,11 +110,16 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_child(Label::new(|data: &AppState, _env: &_| "Min: ".to_string() + &data.service_min))
         .with_spacer(8.0)
         .with_child(Label::new(|data: &AppState, _env: &_| "Max: ".to_string() + &data.service_max))
-        .with_spacer(8.0)
-        .with_child(Label::new(|data: &AppState, _env: &_| data.service_validation_message.clone()))
+        .with_spacer(8.0);
+
+
+    // Créer une section qui va afficher les différents éléments d'un service
+    let service_table = Flex::row()
         .with_flex_spacer(1.0)
-        .border(BORDER_COLOR, 1.0)
-        .expand_width();
+        .with_flex_child(left_service_table, 1.0)
+        .with_flex_spacer(1.0)
+        .with_flex_child(right_service_table, 1.0)
+        .center();
 
     // Créer la section en haut à droite
     let right_top_sidebar = Flex::<AppState>::column()
@@ -101,7 +129,9 @@ fn ui_builder() -> impl Widget<(AppState)> {
         .with_spacer(8.0)
         .with_child(Button::new("Ajouter").on_click(add_new_service))
         .with_flex_spacer(1.0)
-        .with_child(service_table)
+        .with_child(service_table.center())
+        .with_flex_spacer(1.0)
+        .with_child(Label::new(|data: &AppState, _env: &_| data.service_validation_message.clone()))
         .with_flex_spacer(1.0)
         .border(BORDER_COLOR, 1.0)
         .expand_width();
@@ -145,7 +175,7 @@ fn ui_builder() -> impl Widget<(AppState)> {
     main_layout
 }
 
-fn set_list_view(monitored_services: Vec<&str>, left_sidebar: Flex<(AppState)>) -> SizedBox<(AppState)> {
+fn set_list_view(monitored_services: Arc<Vec<String>>, left_sidebar: Flex<AppState>) -> SizedBox<AppState> {
     let left_sidebar = monitored_services.iter().fold(left_sidebar, |column, service| {
         let service_owned = service.to_string();
         let processed_service = insert_line_breaks(&service_owned, 30);
@@ -186,8 +216,8 @@ fn insert_line_breaks(original: &str, max_length: usize) -> String {
 }
 
 // Méthode qui sera applée quand on veut ajouter un nouveau service
-fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
+fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &Env) {
+    // println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
 
     // On commence par remettre toutes les valeurs à "no_data"
     data.service_name = String::from("no_data");
@@ -204,67 +234,87 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
     data.service_max = String::from("no_data");
     data.service_validation_message = String::from("");
 
-    let re = Regex::new(r"^(?P<id>[A-Za-z0-9]{5,10})!(?P<protocol>[A-Za-z0-9]{3,15})://(?:(?P<username>[A-Za-z0-9]{3,50})(?::(?P<password>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50})(?:#(?P<authentication>[A-Za-z0-9\-_.=+*$°()\[\]{}^]{3,50}))?)?@)?(?P<host>[A-Za-z0-9.\-_]{3,50})(?::(?P<port>[0-9]{1,5}))?(?P<path>/[A-Za-z0-9.\-_/]{0,100})!(?P<min>[0-9]{1,8})!(?P<max>[0-9]{1,8})$").unwrap();
+    let aurl_regex = get_aurl_regex();
 
-    match re.captures(&data.input_new_url) {
+    match aurl_regex.captures(&data.input_new_url) {
         Some(caps) => {
-            println!("ID: {}", caps.name("id").unwrap().as_str());
+            // println!("ID: {}", caps.name("id").unwrap().as_str());
             data.service_id = caps.name("id").unwrap().as_str().to_string();
 
-            println!("Protocol: {}", caps.name("protocol").unwrap().as_str());
+            // println!("Protocol: {}", caps.name("protocol").unwrap().as_str());
             data.service_protocol = caps.name("protocol").unwrap().as_str().to_string();
 
             if let Some(username) = caps.name("username") {
-                println!("Username: {}", username.as_str());
+                // println!("Username: {}", username.as_str());
                 data.service_username = username.as_str().to_string();
             } else {
-                println!("Username: no_data");
+                // println!("Username: no_data");
                 data.service_username = String::from("no_data");
             }
 
             if let Some(password) = caps.name("password") {
-                println!("Password: {}", password.as_str());
+                // println!("Password: {}", password.as_str());
                 data.service_password = password.as_str().to_string();
             } else {
-                println!("Password: no_data");
+                // println!("Password: no_data");
                 data.service_password = String::from("no_data");
             }
 
             if let Some(authentication) = caps.name("authentication") {
-                println!("Authentication: {}", authentication.as_str());
+                // println!("Authentication: {}", authentication.as_str());
                 data.service_authentication = authentication.as_str().to_string();
             } else {
-                println!("Authentication: no_data");
+                // println!("Authentication: no_data");
                 data.service_authentication = String::from("no_data");
             }
 
-            println!("Host: {}", caps.name("host").unwrap().as_str());
+            // println!("Host: {}", caps.name("host").unwrap().as_str());
             data.service_host = caps.name("host").unwrap().as_str().to_string();
 
             if let Some(port) = caps.name("port") {
-                println!("Port: {}", port.as_str());
+                // println!("Port: {}", port.as_str());
                 data.service_port = port.as_str().to_string();
             } else {
-                println!("Port: no_data");
+                // println!("Port: no_data");
                 data.service_port = String::from("no_data");
             }
 
             if let Some(path) = caps.name("path") {
-                println!("Path: {}", path.as_str());
+                // println!("Path: {}", path.as_str());
                 data.service_path = path.as_str().to_string();
             } else {
-                println!("Path: no_data");
+                // println!("Path: no_data");
                 data.service_path = String::from("no_data");
             }
 
-            println!("Min: {}", caps.name("min").unwrap().as_str());
+            // println!("Min: {}", caps.name("min").unwrap().as_str());
             data.service_min = caps.name("min").unwrap().as_str().to_string();
 
-            println!("Max: {}", caps.name("max").unwrap().as_str());
+            // println!("Max: {}", caps.name("max").unwrap().as_str());
             data.service_max = caps.name("max").unwrap().as_str().to_string();
 
             data.service_name = data.input_new_url.clone();
             data.service_validation_message = String::from(data.service_name.clone() + " est validé par la regex");
+
+            let newmon_request = Protocol::build_newmon(&data.input_new_url);
+
+            println!("Requête à envoyer au moniteur: {}", newmon_request);
+
+            let newmon_request_clone = newmon_request.clone();
+            // Crée une nouvelle tâche asynchrone et capture la sortie
+            spawn(async move {
+                match tls::connect_tls_and_receive(&newmon_request_clone).await {
+                    Some(response) => {
+                        // Affiche la réponse du serveur
+                        println!("Réponse du serveur: {}", response);
+                    }
+                    None => {
+                        // Gère l'absence de réponse, ce qui implique une erreur dans la connexion ou la lecture de la réponse
+                        println!("Erreur de connexion TLS ou aucune réponse reçue");
+                    }
+                }
+            });
+
         }
         None => {
             println!("L'URL n'est pas valide");
@@ -273,12 +323,43 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid
     }
 }
 
-fn watch_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Voir' cliqué pour le service: {}", data.service_name_state);
+fn watch_service(ctx: &mut druid::EventCtx, data: &mut AppState, _env: &Env) {
+    let request_request = Protocol::build_request(&data.service_name_state);
+    let event_sink = ctx.get_external_handle();
+
+    println!("Requete à envoyer au moniteur: {}", request_request);
+    spawn(async move {
+        match tls::connect_tls_and_receive(&request_request).await {
+            Some(response) => {
+                println!("Réponse du serveur: {}", response);
+                // On met à jour l'état du service
+                event_sink.submit_command(UPDATE_SERVICE_RESPONSE, response, Target::Auto)
+                    .expect("Failed to submit command");
+            }
+            None => {
+                println!("Erreur de connexion TLS ou aucune réponse reçue");
+            }
+        }
+    });
 }
 
-fn update_service_list(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &druid::Env) {
-    println!("Bouton 'Actualiser' cliqué");
+fn update_service_list(ctx: &mut druid::EventCtx, data: &mut AppState, _env: &Env) {
+    let listmon_request = Protocol::build_listmon();
+    let event_sink = ctx.get_external_handle();
+
+    println!("Requete à envoyer au moniteur: {}", listmon_request);
+    spawn(async move {
+        match tls::connect_tls_and_receive(&listmon_request).await {
+            Some(response) => {
+                println!("Réponse du serveur: {}", response);
+                event_sink.submit_command(UPDATE_LIST_SERVICE_RESPONSE, response, Target::Auto)
+                    .expect("Failed to submit command");
+            }
+            None => {
+                println!("Erreur de connexion TLS ou aucune réponse reçue");
+            }
+        }
+    });
 }
 
 #[derive(Clone, Data, Lens)]
@@ -298,4 +379,37 @@ struct AppState {
     service_min: String,
     service_max: String,
     service_validation_message: String,
+    monitored_services: Arc<Vec<String>>,
 }
+
+struct YourDelegate;
+
+impl AppDelegate<AppState> for YourDelegate {
+    fn command(
+        &mut self,
+        _ctx: &mut DelegateCtx,
+        _target: Target,
+        cmd: &Command,
+        data: &mut AppState,
+        _env: &Env,
+    ) -> Handled {
+        if let Some(response) = cmd.get(UPDATE_SERVICE_RESPONSE) {
+            // Afficher un message dans la console pour voir si la commande a été reçue
+            println!("Commande reçue: {}", response);
+            // Mettez à jour l'état avec la réponse
+            data.service_state = response.clone();
+            Handled::Yes
+        } else if let Some(response) = cmd.get(UPDATE_LIST_SERVICE_RESPONSE) {
+            // Afficher un message dans la console pour voir si la commande a été reçue
+            println!("Commande reçue: {}", response);
+            // Mettez à jour l'état avec la réponse
+            data.monitored_services = Arc::new(response.lines().map(|line| line.to_string()).collect());
+            Handled::Yes
+        }
+
+        else {
+            Handled::No
+        }
+    }
+}
+
