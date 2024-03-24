@@ -1,6 +1,9 @@
 import org.helmo.*;
 
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonHelperTest {
@@ -61,5 +64,24 @@ public class JsonHelperTest {
         assertEquals(65002, configProbes.unicastPort());
         assertEquals("MaCleAESGenereeParMesSoins", configProbes.aesKey());
 
+    }
+
+    // Test d'ajout d'une seule probe
+    @Test
+    public void testAddProbe() throws IOException {
+        // Chemin vers le fichier JSON de test
+        String fileName = "/Users/jillianrezette/Library/Mobile Documents/com~apple~CloudDocs/Helmo - Bac 2/Projet/trkr2024/json/src/test/resources/config-monitor.json";
+
+        // Création d'une instance de JsonHelper
+        JsonHelper jsonHelper = new JsonHelper();
+
+        // Ajout d'une nouvelle probe
+        jsonHelper.addProbe(fileName, "https5", "http5!https://www.example.com/!0!2500");
+
+        // Vérification que la nouvelle probe a été ajoutée avec succès
+        ConfigMonitor configMonitor = jsonHelper.readConfigMonitor(fileName);
+        assertNotNull(configMonitor);
+        assertEquals(jsonHelper.countProbes(fileName), configMonitor.probes().size()); // Vérifie qu'il y a 6 probes après l'ajout
+        assertTrue(configMonitor.probes().stream().anyMatch(p -> p.url().host().equals("www.example.com"))); // Vérifie que la nouvelle probe a bien été ajoutée
     }
 }

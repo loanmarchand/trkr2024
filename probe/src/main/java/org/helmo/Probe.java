@@ -25,7 +25,8 @@ public class Probe {
     }
 
     public void start() {
-        System.out.println("Starting the HTTPS probe");
+        System.out.println("Starting the probe");
+        System.out.println("Protocol: " + configProbes.protocol());
 
         if (!initializeServerSocket()) {
             stop();

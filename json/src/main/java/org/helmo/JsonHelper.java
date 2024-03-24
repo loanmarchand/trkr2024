@@ -2,6 +2,9 @@ package org.helmo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,5 +90,113 @@ public class JsonHelper {
         }
         return null;
     }
+/*
+    public void addProbe(String fileName, String probeValue) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            File file = new File(fileName);
+            JsonNode rootNode;
 
+            // Vérifie si le fichier JSON existe déjà
+            if (file.exists()) {
+                rootNode = mapper.readTree(file);
+            } else {
+                // Si le fichier n'existe pas encore, crée un nouveau nœud racine
+                rootNode = mapper.createObjectNode();
+            }
+
+            // Création d'un ObjectNode pour la nouvelle probe
+            ObjectNode probeNode = mapper.createObjectNode();
+            probeNode.put("probe", probeValue);
+
+            // Récupération du nœud contenant les sondes
+            JsonNode probesNode = rootNode.get("probes");
+
+            // Vérification si le nœud des sondes existe et est un tableau
+            if (probesNode == null || !probesNode.isArray()) {
+                // Si le nœud des sondes n'existe pas ou n'est pas un tableau, crée un nouveau tableau
+                probesNode = mapper.createArrayNode();
+                ((ObjectNode) rootNode).set("probes", probesNode);
+            }
+
+            // Ajout de la nouvelle probe dans le tableau des sondes
+            ((ArrayNode) probesNode).add(probeNode);
+
+            // Écriture du JsonNode mis à jour dans le fichier JSON
+            ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+            writer.writeValue(file, rootNode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    */
+
+    public void addProbe(String fileName, String probeKey, String probeValue) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            File file = new File(fileName);
+            JsonNode rootNode;
+
+            // Vérifie si le fichier JSON existe déjà
+            if (file.exists()) {
+                rootNode = mapper.readTree(file);
+            } else {
+                // Si le fichier n'existe pas encore, crée un nouveau nœud racine
+                rootNode = mapper.createObjectNode();
+            }
+
+            // Création d'un ObjectNode pour la nouvelle sonde
+            ObjectNode probeNode = mapper.createObjectNode();
+            probeNode.put("probe", probeValue);
+
+            // Récupération du nœud contenant les sondes
+            ObjectNode probesNode = (ObjectNode) rootNode.get("probes");
+
+            // Vérification si le nœud des sondes existe
+            if (probesNode == null) {
+                // Si le nœud des sondes n'existe pas, crée un nouveau nœud contenant les sondes
+                probesNode = mapper.createObjectNode();
+                ((ObjectNode) rootNode).set("probes", probesNode);
+            }
+
+            // Ajout de la nouvelle sonde avec la clé spécifiée
+            probesNode.put(probeKey, probeValue);
+
+            // Écriture du JsonNode mis à jour dans le fichier JSON
+            ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+            writer.writeValue(file, rootNode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public int countProbes(String fileName) {
+        try {
+            // Créer un ObjectMapper
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Lire le fichier JSON
+            JsonNode rootNode = mapper.readTree(new File(fileName));
+
+            // Récupérer le nœud "probes"
+            JsonNode probesNode = rootNode.get("probes");
+
+            // Vérifier si le nœud "probes" existe et s'il s'agit d'un objet
+            if (probesNode != null && probesNode.isObject()) {
+                // Convertir le nœud "probes" en ObjectNode pour compter les éléments
+                ObjectNode probesObject = (ObjectNode) probesNode;
+
+                // Retourner le nombre d'éléments dans le nœud "probes"
+                return probesObject.size();
+            } else {
+                // Si le nœud "probes" n'existe pas ou s'il n'est pas un objet, retourner 0
+                return 0;
+            }
+        } catch (IOException e) {
+            // Gérer les exceptions d'entrée/sortie
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }
