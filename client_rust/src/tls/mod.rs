@@ -65,7 +65,7 @@ impl TlsClient {
             return None;
         }
 
-        let mut buffer = Vec::new();
+        let mut buffer = Vec::with_capacity(1024);
         if stream.read_buf(&mut buffer).await.is_err() {
             return None;
         }
