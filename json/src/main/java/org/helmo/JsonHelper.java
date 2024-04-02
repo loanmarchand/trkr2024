@@ -33,7 +33,7 @@ public class JsonHelper {
 
             return new ConfigMonitor(multicastAddress, multicastPort, multicastInterface, clientPort, tls, aesKey, protocolsDelay, probes);
         } catch (IOException e) {
-            e.printStackTrace(); //TODO: handle exception
+            System.out.println("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
         }
 
         return null;
@@ -86,7 +86,7 @@ public class JsonHelper {
 
             return new ConfigProbes(protocol, multicastAddress, multicastPort, multicastInterface, multicastDelay, unicastPort, aesKey);
         } catch (IOException e) {
-            e.printStackTrace(); //TODO: handle exception
+            System.out.println("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
         }
         return null;
     }
@@ -166,7 +166,7 @@ public class JsonHelper {
             ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
             writer.writeValue(file, rootNode);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
         }
     }
 
@@ -195,7 +195,7 @@ public class JsonHelper {
             }
         } catch (IOException e) {
             // Gérer les exceptions d'entrée/sortie
-            e.printStackTrace();
+            System.out.println("Erreur lors de la lecture du fichier JSON : " + e.getMessage());
             return 0;
         }
     }
