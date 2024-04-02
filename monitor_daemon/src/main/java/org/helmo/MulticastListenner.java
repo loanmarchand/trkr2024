@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 public class MulticastListenner implements Runnable{
-    private final ConfigMonitor configMonitor;
+    private ConfigMonitor configMonitor;
     private final MulticastSocket multicastSocket;
     private final BlockingQueue<Runnable> worker;
     private final MonitorDaemon monitorDaemon;
+    JsonHelper reader = new JsonHelper();
 
-    public MulticastListenner(ConfigMonitor configMonitor, BlockingQueue<Runnable> worker, MonitorDaemon monitorDaemon) {
+
+    public MulticastListenner(BlockingQueue<Runnable> worker, MonitorDaemon monitorDaemon) {
+        ConfigMonitor configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
         try {
             InetAddress group = InetAddress.getByName(configMonitor.multicastAdress());
             this.multicastSocket = new MulticastSocket(configMonitor.multicastPort());
@@ -57,6 +60,7 @@ public class MulticastListenner implements Runnable{
     }
 
     private void handleProbeCommand(Command command, InetAddress probeAddress) {
+        configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
         List<Aurl> aurls = configMonitor.probes().stream().filter(aurl -> aurl.type().contains(command.getProtocole())).toList();
         monitorDaemon.sendAurlsToProbes(aurls, command, probeAddress);
     }
@@ -65,6 +69,7 @@ public class MulticastListenner implements Runnable{
     public void run() {
             byte[] buffer = new byte[1024];
             while (true) {
+                configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 try {
                     multicastSocket.receive(packet);

@@ -56,7 +56,9 @@ public class ConnectionClientHandler implements Runnable {
 
     private void handleRequestCommand(Command command) {
         ResultState result = tlsServer.getMonitor(command.getId());
-        out.println(MessageBuilder.buildRespond(command.getId(),result.url(),result.state()));
+        String reponse = MessageBuilder.buildRespond(command.getId(),result.url(),result.state());
+        System.out.println(reponse);
+        out.println(reponse);
     }
 
     private void handleListMonCommand() {

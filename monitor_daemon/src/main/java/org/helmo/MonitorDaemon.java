@@ -8,13 +8,15 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class MonitorDaemon {
-    private final ConfigMonitor configMonitor;
+    private ConfigMonitor configMonitor;
     private final AesEncryption aesEncryption;
     private final Map<Aurl, String> aurlStatus;
     private final BlockingQueue<Runnable> worker;
     private final ExecutorService executor;
     private final TlsServer tlsServer;
     private final MulticastListenner multicastListenner;
+    JsonHelper reader = new JsonHelper();
+
 
     public MonitorDaemon(ConfigMonitor configMonitor) {
         this.configMonitor = configMonitor;
@@ -24,7 +26,7 @@ public class MonitorDaemon {
         this.executor = new ThreadPoolExecutor(10,50,60, TimeUnit.SECONDS,worker);
         configMonitor.probes().forEach(aurl -> aurlStatus.put(aurl, "UNKNOWN"));
         tlsServer = new TlsServer(configMonitor.clientPort(), this);
-        multicastListenner = new MulticastListenner(configMonitor,worker,this);
+        multicastListenner = new MulticastListenner(worker,this);
     }
 
     public void start() {
@@ -50,6 +52,7 @@ public class MonitorDaemon {
             if (command.getCommandType().equals("STATUS")) {
                 String id = command.getId();
                 String state = command.getState();
+                System.out.println(state);
                 aurlStatus.keySet().stream()
                         .filter(a -> a.type().equals(id))
                         .findFirst().ifPresent(aurl -> aurlStatus.put(aurl, state));
@@ -89,6 +92,8 @@ public class MonitorDaemon {
         System.out.println(command);
         // Example of sending AURLs to the probe
         try (Socket socket = new Socket(probeAddress, Integer.parseInt(command.getPort())); PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true)) {
+            configMonitor = reader.readConfigMonitor("json/src/main/resources/config-monitor.json");
+            System.out.println(aurls.size());
             String message = MessageBuilder.buildSetup(configMonitor.protocolsDelay().get(command.getProtocole()), aurls);
             System.out.println("Sending AURLs to probe: " + message);
             message = aesEncryption.encrypt(message, configMonitor.aesKey());
@@ -108,11 +113,13 @@ public class MonitorDaemon {
     }
 
     public boolean addMonitor(Aurl aurl) {
-        if (aurlStatus.containsKey(aurl)) {
-            return false;
+        if (!aurlStatus.containsKey(aurl)) {
+            aurlStatus.put(aurl, "UNKNOWN");
+            reader.addProbe("json/src/main/resources/config-monitor.json",aurl.type(),RegexBuilder.buildAurl(aurl));
+            return true;
         }
-        aurlStatus.put(aurl, "UNKNOWN");
-        return true;
+
+        return false;
     }
 
     public List<String> getIdAurls() {
