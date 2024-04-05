@@ -3,7 +3,7 @@ use std::io::Read;
 use std::sync::Arc;
 
 use native_tls::Certificate;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio_native_tls::{TlsConnector, TlsStream};

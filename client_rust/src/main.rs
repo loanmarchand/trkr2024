@@ -1,8 +1,7 @@
-use std::iter::once_with;
-use std::sync::{Arc};
+use std::sync::Arc;
 
 use druid::{AppDelegate, AppLauncher, Color, Command, DelegateCtx, Env, EventCtx, Handled, Key, Selector, Target, Widget, WidgetExt, WindowDesc, WindowState};
-use druid::widget::{Button, Flex, Label, List, SizedBox, TextBox};
+use druid::widget::{Button, Flex, Label, List, TextBox};
 use druid_derive::{Data, Lens};
 use tokio::spawn;
 use tokio::sync::Mutex;
@@ -30,27 +29,25 @@ const BORDER_COLOR: Key<Color> = druid::theme::BORDER_LIGHT;
 #[tokio::main]
 async fn main() {
     // Initialisation de la connexion TLS
-    let tls_client = TlsClient::connect().await.expect("Failed to create TLS connection");
-
+    let tls_client = match TlsClient::connect().await {
+        Some(client) => client,
+        None => {
+            eprintln!("Failed to create TLS connection");
+            return;
+        },
+    };
     // Convertir la connexion TLS en une Arc<Mutex<TlsClient>> afin de la stocker dans AppState
     let tls_client = Arc::new(Mutex::new(tls_client));
 
-
     // Création d'un Vec temporaire avec vos chaînes de caractères
     let temp_services = vec![
-        "snmp://superswila:TeamG0D$wila#iLikeGodSWILA2024@v3.swi.la:6161/1.3.6.1.4.1.2021.4.11.0".to_string(),
-        "snmp://1amMemb3r0fTe4mSWILA@trkr.swilabus.com:161/1.3.6.1.4.1.2021.11.11.0".to_string(),
-        "https://www.swilabus.com/".to_string(),
-        "https://www.swilabus.be/".to_string(),
-        "https://www.swilabus.com/trkr1".to_string(),
-        "https://www.swilabus.com/trkr2".to_string(),
     ];
 
     // Conversion vers Arc<Vec<String>>,
     let monitored_services = Arc::new(temp_services);
 
     // Utilisation de ce im::Vector pour initialiser AppState
-    let mut app_state = AppState {
+    let app_state = AppState {
         input_new_url: String::new(),
         service_name: String::from("no_data"),
         service_state: String::from("no_data"),
@@ -66,20 +63,20 @@ async fn main() {
         service_max: String::from("no_data"),
         service_validation_message: String::from(""),
         service_name_state: String::from("no_data"),
-        monitored_services, // Utilisez le vecteur immuable ici
+        monitored_services,
         tls_client,
     };
 
-    let main_window = WindowDesc::new(ui_builder(app_state.clone()))
+    let main_window = WindowDesc::new(ui_builder())
         .title("Trkr Client")
         .set_window_state(WindowState::Maximized);
 
     AppLauncher::with_window(main_window)
         .delegate(YourDelegate {})
-        .launch(app_state).expect("TODO: panic message");
+        .launch(app_state).expect("Moniteur non joignable");
 }
 
-fn ui_builder(state: AppState) -> impl Widget<AppState> {
+fn ui_builder() -> impl Widget<AppState> {
     // Créer le titre centré dans un Flex
     let header = Flex::<AppState>::row()
         .with_flex_spacer(1.0)
@@ -193,30 +190,13 @@ fn set_list_view() -> impl Widget<AppState> {
             .with_child(Label::new(|item: &String, _env: &Env| item.clone()))
             .with_spacer(8.0)
             .with_child(Button::new("Voir").on_click(|ctx, data: &mut String, _env| {
-                // Ici, vous envoyez une commande avec les données nécessaires
-                // par exemple, vous pourriez vouloir passer l'URL ou un identifiant du service
                 ctx.submit_command(Command::new(WATCH_SERVICE, data.clone(), Target::Auto));
             }))
     }).lens(AppState::monitored_services)
 }
 
-
-
-
-fn insert_line_breaks(original: &str, max_length: usize) -> String {
-    original.chars()
-        .enumerate()
-        .fold(String::new(), |mut acc, (index, char)| {
-            if index % max_length == 0 && index != 0 {
-                acc.push('\n');
-            }
-            acc.push(char);
-            acc
-        })
-}
-
 // Méthode qui sera applée quand on veut ajouter un nouveau service
-fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &Env) {
+fn add_new_service(_ctx: &mut EventCtx, data: &mut AppState, _env: &Env) {
     // println!("Bouton 'Ajouter' cliqué avec l'URL: {}", data.input_new_url);
 
     // On commence par remettre toutes les valeurs à "no_data"
@@ -304,7 +284,7 @@ fn add_new_service(_ctx: &mut druid::EventCtx, data: &mut AppState, _env: &Env) 
             // Crée une nouvelle tâche asynchrone
             spawn(async move {
                 // Obtenir un verrou sur le Mutex pour accéder à `TlsClient`
-                let mut tls_client = tls_client_arc.lock().await;
+                let tls_client = tls_client_arc.lock().await;
 
                 match tls_client.send_and_receive(&newmon_request_clone).await {
                     Some(response) => {
@@ -337,7 +317,7 @@ fn watch_service(ctx: &mut DelegateCtx, data: &mut AppState, _env: &Env) {
 
     spawn(async move {
         // Obtenir un verrou sur le Mutex pour accéder à `TlsClient`
-        let mut tls_client = tls_client_arc.lock().await;
+        let tls_client = tls_client_arc.lock().await;
 
         match tls_client.send_and_receive(&request_request).await {
             Some(response) => {
@@ -366,7 +346,7 @@ fn update_service_list(ctx: &mut EventCtx, data: &mut AppState, _env: &Env) {
 
     spawn(async move {
         // Obtenir un verrou sur le Mutex pour accéder à `TlsClient`
-        let mut tls_client = tls_client_arc.lock().await;
+        let tls_client = tls_client_arc.lock().await;
 
         match tls_client.send_and_receive(&listmon_request).await {
             Some(response) => {
@@ -418,19 +398,16 @@ impl AppDelegate<AppState> for YourDelegate {
         if let Some(response) = cmd.get(UPDATE_SERVICE_RESPONSE) {
             // Afficher un message dans la console pour voir si la commande a été reçue
             println!("Commande reçue 1: {}", response);
-            // Mettez à jour l'état avec la réponse
             data.service_state = response.clone();
             Handled::Yes
         } else if let Some(response) = cmd.get(UPDATE_LIST_SERVICE_RESPONSE) {
             // Afficher un message dans la console pour voir si la commande a été reçue
             println!("Commande reçue 2: {}", response);
-            // Mettez à jour l'état avec la réponse en sachant que chaque service est séparé d'un espace
             data.monitored_services = Arc::new(response.split_whitespace().skip(1).map(|s| s.to_string()).collect());
             Handled::Yes
         } else if let Some(service_name) = cmd.get(WATCH_SERVICE) {
             // Afficher un message dans la console pour voir si la commande a été reçue
             println!("Commande reçue 3: {}", service_name);
-            // Mettez à jour l'état avec le nom du service
             data.service_name_state = service_name.clone();
             watch_service(ctx, data, _env);
             Handled::Yes
@@ -441,4 +418,3 @@ impl AppDelegate<AppState> for YourDelegate {
         }
     }
 }
-
