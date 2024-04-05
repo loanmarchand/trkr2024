@@ -35,7 +35,7 @@ public class TlsServer {
             tmf.init(keyStore);
 
             // Création du contexte SSL
-            SSLContext sslContext = SSLContext.getInstance("TLS");
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
             sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
             // Création du serveur Socket
